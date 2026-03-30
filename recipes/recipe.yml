@@ -300,12 +300,9 @@ modules:
     install:
       packages:
         - deadbeef
-        # - deadbeef-mpris2-plugin # currently causes issues (cursour stutters while skipping to the next song)
         - deadbeef-plugins
-      exclude:
-        - deadbeef-mpris2-plugin
         
-  # Set DeaDBeeF to dark theme:
+  # Set DeaDBeeF to dark theme and delete mpris.so (it causes cursor micro stutters when switching tracks):
   - type: script
     scripts:
       - deadbeef.sh
