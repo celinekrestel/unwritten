@@ -347,6 +347,7 @@ modules:
       masked:
         - bootc-fetch-apply-updates.timer
         - bootc-fetch-apply-updates.service
+        - systemd-remount-fs.service
     # user:
     #  enabled:
         # - some_service.service
