@@ -309,8 +309,8 @@ modules:
       ID: unwritten
       ID_LIKE: fedora
       NAME: Unwritten
-      VERSION: 43 (Next)
-      PRETTY_NAME: Unwritten 43
+      VERSION: 44
+      PRETTY_NAME: Unwritten 44
       DEFAULT_HOSTNAME: unwritten
       VERSION_CODENAME: Next
 
