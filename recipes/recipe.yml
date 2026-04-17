@@ -1,16 +1,12 @@
 ---
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 
-###########################################################################################################################################################
-## WITH SPECIAL THANKS AND CREDIT TO THE AWESOME ==== LUMAERIS ==== OF ==== VEDAOS ====: https://github.com/Lumaeris/vedaos/blob/main/recipes/recipe.yml ##     
-###########################################################################################################################################################
-
 ################################################
 ## Find a removal log at the end of this file.##
 ################################################
 
 name: unwritten
-description: This is the excellent VedaOS with some personal customizations.
+description: Unwritten 44
 base-image: quay.io/fedora/fedora-bootc
 image-version: 44
 cosign-version: none
@@ -459,7 +455,3 @@ modules:
 # Custom kernel signing:
   # - akmods-keygen@akmods-keygen.service
   # - akmods-keygen.target
-
-###########################################################################################################################################################
-## WITH SPECIAL THANKS AND CREDIT TO THE AWESOME ==== LUMAERIS ==== OF ==== VEDAOS ====: https://github.com/Lumaeris/vedaos/blob/main/recipes/recipe.yml ##     
-###########################################################################################################################################################
