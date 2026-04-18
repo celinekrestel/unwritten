@@ -270,13 +270,7 @@ modules:
         - yelp
         - yelp-libs
         - yelp-xsl 
-        
-  # Steam:
-  - type: dnf
-    install:
-      packages:
-        - steam
-  
+         
   # GNOME extensions:
   - type: gnome-extensions        
     install:
