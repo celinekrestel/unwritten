@@ -2,7 +2,7 @@
 
 ## About
 
-Unwritten is a custom [bootc](https://containers.github.io/bootc/) image based on **fedora-bootc**, tailored to an AMD CPU/GPU desktop. It ships with GNOME and the CachyOS kernel. This project was inspired by the excellent [**VedaOS**](https://github.com/Lumaeris/vedaos) by **Lumaeris**.
+Unwritten is a custom [bootc](https://containers.github.io/bootc/) image based on **fedora-bootc**, tailored to my AMD CPU/GPU desktop. It ships with GNOME and the CachyOS kernel.
 
 > [!IMPORTANT]
 > Unwritten uses **`run0`** instead of `sudo`. For certain commands, you will need to wrap them as **`run0 sh -c '$your_command$'`** — this is an SELinux constraint that may be resolved in a future release. You can also set SELinux to permissive mode (`setenforce 0`), though this is not recommended. Note that `sudo` remains available inside a distrobox environment.
@@ -124,20 +124,6 @@ eval "$(starship init zsh)"
 
 ---
 
-## 3D Applications
-
-### MangoHud
-
-Install the Flatpak version of MangoHud:
-
-```shell
-flatpak install org.freedesktop.Platform.VulkanLayer.MangoHud
-```
-
-Then use [Flatseal](https://flathub.org/apps/com.github.tchx84.Flatseal) to give Steam the following filesystem permission: `xdg-config/MangoHud:ro`.
-
----
-
 ## Troubleshooting
 
 ### GDM does not start at boot
@@ -161,7 +147,7 @@ You may need to run the second command twice, or perform a full reboot.
 
 ## Related Projects
 
-- [VedaOS](https://github.com/Lumaeris/vedaos) — Special credit and thanks to Lumaeris!
+- [VedaOS](https://github.com/Lumaeris/vedaos)
 - [Zirconium](https://github.com/zirconium-dev/zirconium)
 - [XeniaOS](https://github.com/XeniaMeraki/XeniaOS)
 - [solarpowered](https://github.com/askpng/solarpowered)
