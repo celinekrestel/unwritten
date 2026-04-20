@@ -1,9 +1,17 @@
 ---
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 
-################################################
-## Find a removal log at the end of this file.##
-################################################
+##########################################
+##########################################
+##          ##################          ##
+##          ## Unwritten 44 ##          ##
+##          ##################          ##
+##########################################
+##########################################
+
+#################################################
+## Find a removal log at the end of this file. ##
+#################################################
 
 # Image metadata and base configuration
 name: unwritten
@@ -83,9 +91,6 @@ modules:
         - distrobox
         - fdk-aac
         - fedora-repos-archive
-        # - ffmpeg
-        # - ffmpeg-libs
-        # - ffmpegthumbnailer
         - flatpak-spawn
         - fuse
         - fzf
@@ -94,13 +99,6 @@ modules:
         - google-noto-sans-javanese-fonts
         - google-noto-sans-sundanese-fonts
         - heif-pixbuf-loader
-        # - libavcodec
-        # Webcam support (DroidCam works without this:)- libcamera
-        # Webcam support (DroidCam works without this:)- libcamera-gstreamer
-        # Webcam support (DroidCam works without this:)- libcamera-ipa
-        # Webcam support (DroidCam works without this:)- libcamera-tools
-        # Webcam support (DroidCam works without this:)- pipewire-plugin-libcamera
-        # Webcam support (DroidCam works without this:) - libcamera-v4l2
         - libfdk-aac
         - libheif
         - libratbag-ratbagd
@@ -116,8 +114,6 @@ modules:
         - solaar-udev
         - squashfs-tools
         - symlinks
-        # - tcpdump
-        # - traceroute
         - wireguard-tools
         - wl-clipboard
         - xhost
@@ -140,11 +136,9 @@ modules:
         - adw-gtk3-theme
         - alsa-sof-firmware
         - alsa-tools-firmware
-        # wifi: - atheros-firmware
         - atuin
         - bc
         - borgbackup
-        # wifi, Broadcom: - brcmfmac-firmware
         - btop
         - btrbk
         - chezmoi
@@ -157,8 +151,6 @@ modules:
         - firefox
         - firewalld
         - flatpak
-        # Fingerprint reader: - fprintd
-        # Fingerprint reader: - fprintd-pam
         - fuse-libs
         - gamemode
         - gdm
@@ -178,7 +170,6 @@ modules:
         - gnome-shell-extension-gsconnect
         - gum
         - gvfs-fuse
-        # For Picture Transfer Protocol (PTP): - gvfs-gphoto2
         - gvfs-mtp
         - gvfs-smb
         - hplip
@@ -187,45 +178,41 @@ modules:
         - ibus
         - ImageMagick
         - inxi
-        # wifi: - iwlwifi-dvm-firmware
-        # wifi: - iwlwifi-mvm-firmware
-        - jetbrains-mono-fonts-all
-        # Android mounting; it’s done via gvfs-mtp by GNOME: - jmtpfs
-        
+        - jetbrains-mono-fonts-all  
         - libratbag-ratbagd
         - libsane-hpaio
         - lynis
         - mangohud
-        # only for Niri: - mate-polkit
         - mbuffer
         - micro
-        - mpv
-        - mpv-mpris
-        # Mediatek 7600/7900 series WiFi/Bluetooth adapters: - mt7xxx-firmware
         - nautilus
         - NetworkManager-config-connectivity-fedora
         - NetworkManager-openvpn
         - NetworkManager-wifi
-        # Firmware for NXP WiFi/Bluetooth/UWB adapters: - nxpwireless-firmware
         - orca
         - ptyxis
         - pv
-        # Firmware for Realtek devices: - realtek-firmware
         - sane-backends-drivers-scanners
         - squashfuse-libs
         - systemd-container
         - systemd-oomd-defaults
         - tealdeer
-        # Firmware for Texas Instruments WiFi/Bluetooth adapters: - tiwilink-firmware
         - unzip
         - wget
-        # - whois
         - xdg-desktop-portal-gnome
         - xdg-user-dirs-gtk
         - xwininfo
         - zram-generator-defaults
         - zsh
-        
+
+##################
+## niri section ##
+##################
+
+  # Follow these instruction if you want to add niri:
+  # 1. Add this to the dnf ublue-os/packages list above: - mate-polkit
+  # 2. Uncomment the following:
+  
   #- type: dnf
   #  repos:
   #    cleanup: true
@@ -256,6 +243,11 @@ modules:
   #    packages:
   #      - webapp-manager
 
+
+###################
+##  DNF removals ##
+###################
+
   - type: dnf
     repos:
       cleanup: true
@@ -269,7 +261,10 @@ modules:
         - yelp-libs
         - yelp-xsl 
          
-  # GNOME extensions:
+#######################
+##  GNOME extensions ##
+#######################
+
   - type: gnome-extensions        
     install:
       # - 7065    # Tiling Shell: https://extensions.gnome.org/extension/7065/tiling-shell/
@@ -279,7 +274,11 @@ modules:
       - 5470    # Weather O’Clock: https://extensions.gnome.org/extension/5470/weather-oclock/
       # GSConnect  (installed as rpm package `gnome-shell-extension-gsconnect`, see above)
       # Caffeine   (installed as rpm package `gnome-shell-extension-caffeine`, see above)
-       
+
+###############
+##  DeaDBeeF ##
+###############
+
   # DeaDBeeF (make sure these are the last rpm packages to be installed):
   - type: dnf
     repos:
@@ -294,7 +293,11 @@ modules:
   - type: script
     scripts:
       - deadbeef.sh
-   
+
+###############
+##  Stamp it ##
+###############
+
   # Stamp:
   - type: os-release
     properties:
@@ -306,14 +309,14 @@ modules:
       DEFAULT_HOSTNAME: unwritten
       VERSION_CODENAME: Next
 
-  # add flathub, a way better flatpak repo, and remove fedora flatpaks
+  # Add Flathub and remove the Fedora Flatpak repo:
   - type: script 
     snippets:
       - mkdir -p /etc/flatpak/remotes.d/
       - curl --retry 3 -Lo /etc/flatpak/remotes.d/flathub.flatpakrepo https://dl.flathub.org/repo/flathub.flatpakrepo
       - rm -f /usr/lib/systemd/system/flatpak-add-fedora-repos.service
 
-  # some finishing touches
+  # Finish it:
   - type: script
     snippets:
       - rm -rf /usr/share/doc
@@ -324,7 +327,11 @@ modules:
       - dnf5 versionlock clear
       - dnf5 clean all
 
-  # Systemd services:
+#######################
+##  Systemd services ##
+#######################
+
+  # Enable, disable and mask systemd services:
   - type: systemd
     system:
       enabled:
@@ -344,6 +351,10 @@ modules:
     #  enabled:
         # - some_service.service
 
+#######################
+##  Kernel arguments ##
+#######################
+
   # Set kernel arguments for disabling plymouth (since it is not part of Unwritten):
   - type: kargs
     kargs:
@@ -356,14 +367,64 @@ modules:
     kargs:
       - hid_apple.fnmode=2
 
+################
+##  Initramfs ##
+################
+
   - type: initramfs
 
- # this sets up the proper policy & signing files for signed images to work fully:
+
+##############
+##  Signing ##
+##############
+
+ # Set up policy & signing files for your signed image:
   - type: signing 
   
 ##########################################
+##########################################
 ## My removal list for future reference:##
 ##########################################
+##########################################
+
+# WLAN and Bluetooth Firmware:
+  # for Atheros: - atheros-firmware
+  # for Realtek: - realtek-firmware
+  # for Texas Instruments WiFi/Bluetooth adapters: - tiwilink-firmware
+  # for Mediatek 7600/7900 series WiFi/Bluetooth adapters: - mt7xxx-firmware
+  # for NXP WiFi/Bluetooth/UWB adapters: - nxpwireless-firmware
+  # for Broadcom: - brcmfmac-firmware
+  # for legacy Intel WLAN chips: - iwlwifi-dvm-firmware
+  # for modern Intel WLAN chips: - iwlwifi-mvm-firmware
+  # for even more modern Intel WLAN chips: - iwlwifi-mld-firmware
+
+# Android mounting; it’s done via gvfs-mtp by GNOME now: 
+  # - jmtpfs
+
+# mpv:
+  # - mpv
+  # - mpv-mpris
+  # - libavcodec
+
+# Webcam support (DroidCam works without this:)
+  # - libcamera
+  # - libcamera-gstreamer
+  # - libcamera-ipa
+  # - libcamera-tools
+  # - pipewire-plugin-libcamera
+  # - libcamera-v4l2
+
+# For Picture Transfer Protocol (PTP): 
+  # - gvfs-gphoto2
+
+# Fingerprint reader:
+  # - fprintd
+  # - fprintd-pam
+
+# ffmpeg
+  # - ffmpeg
+  # - ffmpeg-libs
+  # - ffmpegthumbnailer
 
 # Lecacy commands like `ipconfig` and `route`:
   # - net-tools
