@@ -13,14 +13,17 @@
 ## Find a removal log at the end of this file. ##
 #################################################
 
-# Image metadata and base configuration
+#########################################
+## Image metadata & base configuration ##
+#########################################
+
 name: unwritten
 description: Unwritten 44 
 base-image: quay.io/fedora/fedora-bootc
 image-version: 44
-cosign-version: none # Container signing via cosign
-nushell-version: none # BlueBuild scripting during the build process
-blue-build-tag: none # BlueBuild won’t append its tags to this image
+cosign-version: none    # Container signing via cosign
+nushell-version: none   # BlueBuild scripting during the build process
+blue-build-tag: none    # BlueBuild won’t append its tags to this image
 
 modules:
   # install fedora logos and dnf5-plugins that is needed for copr management and other actions
@@ -36,7 +39,9 @@ modules:
       - source: system
         destination: /
 
-  # remove leftovers from fedora-bootc
+######################################################
+## Remove packages from the fedora-bootc base image ##
+######################################################
   - type: dnf
     remove:
       packages:
@@ -89,7 +94,7 @@ modules:
       packages:
         - alsa-firmware
         - distrobox
-        - fdk-aac
+        - fdk-aac         # High-quality AAC audio codec (command line tool)
         - fedora-repos-archive
         - flatpak-spawn
         - fuse
@@ -112,12 +117,9 @@ modules:
         - powerstat
         - smartmontools
         - solaar-udev
-        - squashfs-tools
-        - symlinks
+        - symlinks        # A tiny utility to find and fix broken symlinks
         - wireguard-tools
         - wl-clipboard
-        - xhost
-        - xorg-x11-xauth
         - zstd
 
   - type: script
@@ -134,10 +136,10 @@ modules:
     install:
       packages:
         - adw-gtk3-theme
-        - alsa-sof-firmware
+        - alsa-sof-firmware    # Sound Open Firmware. Crucial for modern Intel/AMD audio DSPs to work properly
         - alsa-tools-firmware
         - atuin
-        - bc
+        - bc                    # Basic Calculator. CLI tool for math.
         - borgbackup
         - btop
         - btrbk
@@ -152,7 +154,6 @@ modules:
         - firewalld
         - flatpak
         - fuse-libs
-        - gamemode
         - gdm
         - git
         - glibc-langpack-de
@@ -173,10 +174,8 @@ modules:
         - gvfs-mtp
         - gvfs-smb
         - hplip
-        - hyfetch
         - ibm-plex-sans-fonts
         - ibus
-        - ImageMagick
         - inxi
         - jetbrains-mono-fonts-all  
         - libratbag-ratbagd
@@ -193,7 +192,6 @@ modules:
         - ptyxis
         - pv
         - sane-backends-drivers-scanners
-        - squashfuse-libs
         - systemd-container
         - systemd-oomd-defaults
         - tealdeer
@@ -267,19 +265,19 @@ modules:
 
   - type: gnome-extensions        
     install:
-      # - 7065    # Tiling Shell: https://extensions.gnome.org/extension/7065/tiling-shell/
-      - 615     # AppIndicator and KStatusNotifierItem Support: https://extensions.gnome.org/extension/615/appindicator-support/
-      - 3843    # Just Perfection: https://extensions.gnome.org/extension/3843/just-perfection/
-      # - 5506    # User Avatar In Quick Settings: https://extensions.gnome.org/extension/5506/user-avatar-in-quick-settings/
-      - 5470    # Weather O’Clock: https://extensions.gnome.org/extension/5470/weather-oclock/
-      # GSConnect  (installed as rpm package `gnome-shell-extension-gsconnect`, see above)
-      # Caffeine   (installed as rpm package `gnome-shell-extension-caffeine`, see above)
+      # - 7065    # Tiling Shell:                                   https://extensions.gnome.org/extension/7065/tiling-shell/
+      - 615       # AppIndicator and KStatusNotifierItem Support:   https://extensions.gnome.org/extension/615/appindicator-support/
+      - 3843      # Just Perfection:                                https://extensions.gnome.org/extension/3843/just-perfection/
+      - 5470      # Weather O’Clock:                                https://extensions.gnome.org/extension/5470/weather-oclock/
+      # - 5506    # User Avatar In Quick Settings:                  https://extensions.gnome.org/extension/5506/user-avatar-in-quick-settings/
+      # GSConnect, i.e. 1319 (installed as rpm, see above)          https://extensions.gnome.org/extension/1319/gsconnect/
+      # Caffeine, i.e. 517 (installed as rpm, see above)            https://extensions.gnome.org/extension/517/caffeine/
 
 ###############
 ##  DeaDBeeF ##
 ###############
 
-  # DeaDBeeF (make sure these are the last rpm packages to be installed):
+  # DeaDBeeF (make sure these are `the last` rpm packages to be installed):
   - type: dnf
     repos:
       cleanup: true
@@ -289,7 +287,7 @@ modules:
         - deadbeef
         - deadbeef-plugins
         
-  # Set DeaDBeeF to dark theme and delete mpris.so (it causes cursor micro stutters when switching tracks):
+  # Set DeaDBeeF to dark theme and delete mpris.so – mpris causes cursor micro stutters when switching tracks:
   - type: script
     scripts:
       - deadbeef.sh
@@ -298,7 +296,6 @@ modules:
 ##  Stamp it ##
 ###############
 
-  # Stamp:
   - type: os-release
     properties:
       ID: unwritten
@@ -309,14 +306,19 @@ modules:
       DEFAULT_HOSTNAME: unwritten
       VERSION_CODENAME: Next
 
-  # Add Flathub and remove the Fedora Flatpak repo:
+################################################
+##  Remove Fedora Flatpak repo – add Flathub  ##
+################################################
+
   - type: script 
     snippets:
       - mkdir -p /etc/flatpak/remotes.d/
       - curl --retry 3 -Lo /etc/flatpak/remotes.d/flathub.flatpakrepo https://dl.flathub.org/repo/flathub.flatpakrepo
       - rm -f /usr/lib/systemd/system/flatpak-add-fedora-repos.service
 
-  # Finish it:
+######################
+##  Make it clean.  ##
+######################
   - type: script
     snippets:
       - rm -rf /usr/share/doc
@@ -374,9 +376,9 @@ modules:
   - type: initramfs
 
 
-##############
-##  Signing ##
-##############
+####################
+##  Image signing ##
+####################
 
  # Set up policy & signing files for your signed image:
   - type: signing 
@@ -388,25 +390,43 @@ modules:
 ##########################################
 
 # WLAN and Bluetooth Firmware:
-  # for Atheros: - atheros-firmware
-  # for Realtek: - realtek-firmware
-  # for Texas Instruments WiFi/Bluetooth adapters: - tiwilink-firmware
-  # for Mediatek 7600/7900 series WiFi/Bluetooth adapters: - mt7xxx-firmware
-  # for NXP WiFi/Bluetooth/UWB adapters: - nxpwireless-firmware
-  # for Broadcom: - brcmfmac-firmware
-  # for legacy Intel WLAN chips: - iwlwifi-dvm-firmware
-  # for modern Intel WLAN chips: - iwlwifi-mvm-firmware
-  # for even more modern Intel WLAN chips: - iwlwifi-mld-firmware
+  # - atheros-firmware
+  # - realtek-firmware
+  # - tiwilink-firmware      # for Texas Instruments WiFi/Bluetooth adapters
+  # - mt7xxx-firmware        # for Mediatek 7600/7900 series WiFi/Bluetooth adapters
+  # - nxpwireless-firmware   # for NXP WiFi/Bluetooth/UWB adapters
+  # - brcmfmac-firmware      # for Broadcom
+  # - iwlwifi-dvm-firmware   # for legacy Intel WLAN chips
+  # - iwlwifi-mvm-firmware   # for modern Intel WLAN chips
+  # - iwlwifi-mld-firmware   # for even more modern Intel WLAN chips
 
-# Android mounting; it’s done via gvfs-mtp by GNOME now: 
+# Intel support:
+  # - intel-vaapi-driver
+  # - intel-gmmlib
+  # - intel-mediasdk
+  # - intel-vpl-gpu-rt
+  # - intel-audio-firmware
+  # - libva-intel-media-driver
+  # THIS PREVENTS OVERHEATING IN INTEL LAPTOPS:
+  # - thermald 
+
+# Legacy X11 forwarding tools:
+  # - xhost
+  # - xorg-x11-xauth
+
+# AppImage support:
+  # - squashfs-tools
+  # - squashfuse-libs
+
+# Android mounting. It’ done via gvfs-mtp by GNOME now.
   # - jmtpfs
 
-# mpv:
+# mpv. There’s a Flatpak available.
   # - mpv
   # - mpv-mpris
   # - libavcodec
 
-# Webcam support (DroidCam works without this:)
+# Webcam support. DroidCam works without this.
   # - libcamera
   # - libcamera-gstreamer
   # - libcamera-ipa
@@ -414,7 +434,7 @@ modules:
   # - pipewire-plugin-libcamera
   # - libcamera-v4l2
 
-# For Picture Transfer Protocol (PTP): 
+# Picture Transfer Protocol (PTP) support. Needed for old digital cameras. 
   # - gvfs-gphoto2
 
 # Fingerprint reader:
@@ -461,16 +481,6 @@ modules:
 
 # GNOME Online Accounts:
   # - gvfs-goa
-
-# Intel specific:
-  # - intel-vaapi-driver
-  # - intel-gmmlib
-  # - intel-mediasdk
-  # - intel-vpl-gpu-rt
-  # - intel-audio-firmware
-  # - libva-intel-media-driver
-  # PREVENTS OVERHEATING IN INTEL LAPTOPS:
-  # - thermald 
 
 # Virtualization Guest Tools:
   # - hyperv-daemons
