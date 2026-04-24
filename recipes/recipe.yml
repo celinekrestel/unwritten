@@ -21,70 +21,72 @@ name: unwritten
 description: Unwritten 44 
 base-image: quay.io/fedora/fedora-bootc
 image-version: 44
-cosign-version: none    # Container signing via cosign
-nushell-version: none   # BlueBuild scripting during the build process
-blue-build-tag: none    # BlueBuild won’t append its tags to this image
+cosign-version: none                       # Container signing via cosign
+nushell-version: none                      # BlueBuild scripting during the build process
+blue-build-tag: none                       # BlueBuild won’t append its tags to this image
 
 modules:
-  # install fedora logos and dnf5-plugins that is needed for copr management and other actions
   - type: dnf
     install:
       packages:
-        - fedora-logos
-        - dnf5-plugins
+        - fedora-logos                     # Provides base Fedora visual assets
+        - dnf5-plugins                     # Essential plugins for DNF5 (needed for COPR)
 
-  # copying system files over to the system
   - type: files
     files:
-      - source: system
+      - source: system                     # Copies local ./system directory files over to /
         destination: /
 
 ######################################################
 ## Remove packages from the fedora-bootc base image ##
 ######################################################
+
   - type: dnf
     remove:
       packages:
         # - console-login-helper-messages
-        - chrony                           # replaced with systemd-timesyncd (see below)
-        - sssd*                            # not needed if only local users are used
-        - qemu-user-static*                # not needed unless cross-arch dev is required
-        - toolbox                          # replaced by distrobox (see below)
+        - chrony                           # Replaced with systemd-timesyncd (see systemd section)
+        - sssd* # Not needed if only local users are used
+        - qemu-user-static*                # Not needed unless cross-arch dev is required
+        - toolbox                          # Replaced by distrobox (see below)
 
-  # footgun. see https://github.com/ublue-os/main/issues/598
   - type: script
     snippets:
-      - rm -f /usr/bin/chsh /usr/bin/lchsh
+      - rm -f /usr/bin/chsh /usr/bin/lchsh # Footgun. see https://github.com/ublue-os/main/issues/598
 
-  # add fedora-multimedia and disable openh264 repo
+#######################################
+## Media Repositories & Reprioritize ##
+#######################################
+
   - type: script
     snippets:
       - dnf5 config-manager addrepo --from-repofile='https://negativo17.org/repos/fedora-multimedia.repo'
       - dnf5 config-manager setopt fedora-multimedia.priority=90
       - dnf5 config-manager setopt fedora-cisco-openh264.enabled=0
   
-  # install packages from fedora-multimedia
   - type: dnf
     install:
       skip-unavailable: true
       packages:
-        - libheif             # Support for Apple HEIC photo format
-        - libva               # Core library for hardware video acceleration (VA-API)
-        - mesa-dri-drivers    # OpenGL drivers
-        - mesa-filesystem     # Base directory structures for Mesa
-        - mesa-libEGL         # EGL API (Crucial for Wayland)
-        - mesa-libGL          # Standard OpenGL library
-        - mesa-libgbm         # Generic Buffer Management (Crucial for Wayland compositing)
-        - mesa-va-drivers     # Unrestricted VA-API drivers for H.264/HEVC hardware decoding
-        - mesa-vulkan-drivers # Vulkan drivers (RADV for AMD, ANV for Intel)
-        - ocl-icd             # OpenCL support for GPU compute tasks (heavy mathematical computer; Blender, etc.)
+        - libheif                          # Support for Apple HEIC photo format
+        - libva                            # Core library for hardware video acceleration (VA-API)
+        - mesa-dri-drivers                 # OpenGL drivers
+        - mesa-filesystem                  # Base directory structures for Mesa
+        - mesa-libEGL                      # EGL API (Crucial for Wayland display servers)
+        - mesa-libGL                       # Standard OpenGL library
+        - mesa-libgbm                      # Generic Buffer Management (Crucial for Wayland compositing)
+        - mesa-va-drivers                  # Unrestricted VA-API drivers for H.264/HEVC decoding
+        - mesa-vulkan-drivers              # Vulkan drivers (RADV for AMD, ANV for Intel)
+        - ocl-icd                          # OpenCL support for GPU compute tasks (Blender, etc.)
 
-  # Hardware driver version locking:
   - type: script
     snippets:
       - dnf5 versionlock add intel-gmmlib intel-mediasdk intel-vpl-gpu-rt libheif libva libva-intel-media-driver mesa-dri-drivers mesa-filesystem mesa-libEGL mesa-libGL mesa-libgbm mesa-va-drivers mesa-vulkan-drivers
 
-  # Install so called "batteries" coined by Universal Blue:
+##############################################
+## Core Software, Utilities, and GNOME Base ##
+##############################################
+
   - type: dnf
     repos:
       cleanup: true
@@ -92,35 +94,127 @@ modules:
         - ublue-os/packages
     install:
       packages:
-        - alsa-firmware
-        - distrobox
-        - fdk-aac         # High-quality AAC audio codec (command line tool)
-        - fedora-repos-archive
-        - flatpak-spawn
-        - fuse
-        - fzf
-        - google-noto-sans-balinese-fonts
-        - google-noto-sans-cjk-fonts
-        - google-noto-sans-javanese-fonts
-        - google-noto-sans-sundanese-fonts
-        - heif-pixbuf-loader
-        - libfdk-aac
-        - libheif
-        - libratbag-ratbagd
-        - libva-utils
-        - lshw
-        - nvme-cli
-        - nvtop
-        - openrgb-udev-rules
-        - openssl
-        - pipewire-libs-extra
-        - powerstat
-        - smartmontools
-        - solaar-udev
-        - symlinks        # A tiny utility to find and fix broken symlinks
-        - wireguard-tools
-        - wl-clipboard
-        - zstd
+        ###################################
+        ##  Hardware & System Sensors    ##
+        ###################################
+        - alsa-firmware                    # Firmware for Advanced Linux Sound Architecture
+        - alsa-sof-firmware                # Sound Open Firmware. Crucial for modern Intel/AMD audio DSPs
+        - alsa-tools-firmware              # Firmware loader tools for specific ALSA sound cards
+        - evtest                           # Input device event monitor and query tool
+        - hplip                            # HP Linux Imaging and Printing suite
+        - inxi                             # Feature-rich command line system information script
+        - libratbag-ratbagd                # Daemon for configuring programmable gaming mice
+        - libsane-hpaio                    # HP network scanner support (part of HPLIP)
+        - lshw                             # Detailed hardware lister utility
+        - mangohud                         # Vulkan/OpenGL overlay for monitoring FPS and thermals
+        - nvme-cli                         # Command-line tool for managing NVMe SSDs
+        - nvtop                            # Task monitor specifically for GPUs (AMD, Intel, NVIDIA)
+        - openrgb-udev-rules               # Hardware access rules for OpenRGB lighting control
+        - powerstat                        # Tool to measure laptop power consumption
+        - sane-backends-drivers-scanners   # Universal scanner drivers for Linux
+        - smartmontools                    # S.M.A.R.T. disk health monitoring utilities
+        - solaar-udev                      # Access rules for Solaar (Logitech receiver manager)
+
+        ###################################
+        ##  System Tools & Utilities     ##
+        ###################################
+        - atuin                            # Magical shell history synced across multiple devices
+        - bc                               # Basic Calculator. CLI tool for mathematical processing
+        - borgbackup                       # Deduplicating archiver with compression and encryption
+        - btop                             # Beautiful terminal resource monitor (CPU, memory, disks)
+        - btrbk                            # Tool for creating snapshots/backups of btrfs subvolumes
+        - chezmoi                          # Secure dotfile manager for cross-machine sync
+        - clamav                           # Open-source command-line antivirus engine
+        - clamav-freshclam                 # Auto-updater for ClamAV virus signature databases
+        - cups                             # Common UNIX Printing System, required for printing
+        - distrobox                        # Run any Linux distribution inside your terminal
+        - fedora-repos-archive             # Access to archived, older Fedora repositories
+        - firewalld                        # Dynamic firewall management daemon
+        - flatpak                          # Linux application sandboxing and distribution framework
+        - flatpak-spawn                    # Run host commands from inside Flatpak sandboxes
+        - fuse                             # Filesystem in Userspace (crucial for AppImages)
+        - fuse-libs                        # Libraries for Filesystem in Userspace
+        - fzf                              # Command-line fuzzy finder for fast terminal searches
+        - git                              # Distributed version control system
+        - gum                              # Tool for creating glamorous shell scripts
+        - lynis                            # Security auditing tool for Unix-like systems
+        - mbuffer                          # Tool for buffering data streams
+        - micro                            # Modern and intuitive terminal-based text editor
+        - openssl                          # Toolkit for TLS/SSL cryptographic protocols
+        - pv                               # Pipe Viewer, monitors the progress of data in pipelines
+        - symlinks                         # A tiny utility to find and fix broken symlinks
+        - systemd-container                # Tools for managing local containers (machinectl)
+        - systemd-oomd-defaults            # Out-of-memory daemon default configuration
+        - tealdeer                         # Fast Rust implementation of tldr (simplified man pages)
+        - unzip                            # Utility to extract zip archives
+        - wget                             # Command-line utility for downloading files from the web
+        - wl-clipboard                     # Command-line copy/paste utilities for Wayland
+        - xwininfo                         # Window information utility for legacy X11 applications
+        - zram-generator-defaults          # Config to auto-generate a compressed RAM disk (zram)
+        - zstd                             # Zstandard fast real-time compression algorithm
+        - zsh                              # The Z shell, a highly customizable bash alternative
+
+        ###################################
+        ##  Networking Tools             ##
+        ###################################
+        - gvfs-smb                         # Windows file sharing (SMB) network support for GNOME
+        - NetworkManager-config-connectivity-fedora # NetworkManager connectivity checks for Fedora
+        - NetworkManager-openvpn           # OpenVPN integration for NetworkManager
+        - NetworkManager-wifi              # Core WiFi support for NetworkManager
+        - wireguard-tools                  # Utilities for managing the WireGuard VPN protocol
+
+        ###################################
+        ##  Media & Codecs               ##
+        ###################################
+        - fdk-aac                          # High-quality AAC audio codec command line tools
+        - heif-pixbuf-loader               # Allows GTK apps to natively render HEIF/HEIC images
+        - libfdk-aac                       # Shared library for the FDK AAC codec
+        - libva-utils                      # Collection of testing utilities for VA-API
+        - pipewire-libs-extra              # Extra PipeWire libraries for advanced audio routing
+
+        ###################################
+        ##  GNOME Components             ##
+        ###################################
+        - f43-backgrounds-gnome            # Standard Fedora 43 desktop wallpapers
+        - gdm                              # GNOME Display Manager (the login screen)
+        - glycin-thumbnailer               # Sandboxed image thumbnailer used by modern GNOME apps
+        - gnome-bluetooth                  # Bluetooth pairing and management tools for GNOME
+        - gnome-color-manager              # Display color profile manager for GNOME
+        - gnome-control-center             # GNOME's main unified settings interface
+        - gnome-disk-utility               # Disks application for formatting and mounting drives
+        - gnome-session-wayland-session    # Enables the Wayland session for GNOME
+        - gnome-settings-daemon            # Background daemon handling GTK and session settings
+        - gnome-shell                      # The core user interface of the GNOME desktop
+        - gnome-shell-extension-caffeine   # Extension to keep the screen awake
+        - gnome-shell-extension-gsconnect  # KDE Connect implementation for GNOME
+        - gvfs-fuse                        # FUSE support for the GNOME Virtual File System
+        - gvfs-mtp                         # Media Transfer Protocol support (mounts Android phones)
+        - nautilus                         # GNOME's default file manager (Files)
+        - orca                             # Screen reader for individuals who are visually impaired
+        - ptyxis                           # Container-oriented terminal emulator for GNOME
+        - xdg-desktop-portal-gnome         # GNOME backend for Flatpak file/screen-sharing portals
+        - xdg-user-dirs-gtk                # Manages localized user directories (Documents, Downloads)
+
+        ###################################
+        ##  Fonts, Themes & L10N         ##
+        ###################################
+        - adw-gtk3-theme                   # Libadwaita styling for legacy GTK3 applications
+        - fira-code-fonts                  # Monospace font with programming ligatures
+        - glibc-langpack-de                # German language pack for GNU C Library
+        - glibc-langpack-en                # English language pack for GNU C Library
+        - glibc-langpack-fr                # French language pack for GNU C Library
+        - google-noto-sans-balinese-fonts  # Font support for Balinese script
+        - google-noto-sans-cjk-fonts       # Font support for Chinese, Japanese, and Korean
+        - google-noto-sans-javanese-fonts  # Font support for Javanese script
+        - google-noto-sans-sundanese-fonts # Font support for Sundanese script
+        - ibm-plex-sans-fonts              # IBM's open-source corporate typeface
+        - ibus                             # Intelligent Input Bus, for multilingual keyboard input
+        - jetbrains-mono-fonts-all         # Excellent monospace font designed for developers
+
+        ###################################
+        ##  User Applications            ##
+        ###################################
+        - firefox                          # The Mozilla Firefox web browser
 
   - type: script
     scripts:
@@ -128,86 +222,11 @@ modules:
       - swap-kernel.sh
       - sudont.sh
 
-  - type: dnf
-    repos:
-      cleanup: true
-      copr:
-        - ublue-os/packages
-    install:
-      packages:
-        - adw-gtk3-theme
-        - alsa-sof-firmware    # Sound Open Firmware. Crucial for modern Intel/AMD audio DSPs to work properly
-        - alsa-tools-firmware
-        - atuin
-        - bc                    # Basic Calculator. CLI tool for math.
-        - borgbackup
-        - btop
-        - btrbk
-        - chezmoi
-        - clamav
-        - clamav-freshclam
-        - cups
-        - evtest
-        - f43-backgrounds-gnome
-        - fira-code-fonts
-        - firefox
-        - firewalld
-        - flatpak
-        - fuse-libs
-        - gdm
-        - git
-        - glibc-langpack-de
-        - glibc-langpack-en
-        - glibc-langpack-fr
-        - glycin-thumbnailer
-        - gnome-bluetooth
-        - gnome-color-manager
-        - gnome-control-center
-        - gnome-disk-utility
-        - gnome-session-wayland-session
-        - gnome-settings-daemon
-        - gnome-shell
-        - gnome-shell-extension-caffeine
-        - gnome-shell-extension-gsconnect
-        - gum
-        - gvfs-fuse
-        - gvfs-mtp
-        - gvfs-smb
-        - hplip
-        - ibm-plex-sans-fonts
-        - ibus
-        - inxi
-        - jetbrains-mono-fonts-all  
-        - libratbag-ratbagd
-        - libsane-hpaio
-        - lynis
-        - mangohud
-        - mbuffer
-        - micro
-        - nautilus
-        - NetworkManager-config-connectivity-fedora
-        - NetworkManager-openvpn
-        - NetworkManager-wifi
-        - orca
-        - ptyxis
-        - pv
-        - sane-backends-drivers-scanners
-        - systemd-container
-        - systemd-oomd-defaults
-        - tealdeer
-        - unzip
-        - wget
-        - xdg-desktop-portal-gnome
-        - xdg-user-dirs-gtk
-        - xwininfo
-        - zram-generator-defaults
-        - zsh
-
 ##################
 ## niri section ##
 ##################
 
-  # Follow these instruction if you want to add niri:
+  # Follow these instructions if you want to add niri:
   # 1. Add this to the dnf ublue-os/packages list above: - mate-polkit
   # 2. Uncomment the following:
   
@@ -251,13 +270,13 @@ modules:
       cleanup: true
     remove:
       packages:
-        - gnome-tour
-        - ibus-libpinyin
-        - ibus-typing-booster
-        - malcontent-control
-        - yelp
-        - yelp-libs
-        - yelp-xsl 
+        - gnome-tour                       # Removes the initial GNOME welcome tour application
+        - ibus-libpinyin                   # Removes default Chinese Pinyin input method
+        - ibus-typing-booster              # Removes the typing autocomplete booster
+        - malcontent-control               # Removes parental control enforcement interfaces
+        - yelp                             # Removes the default GNOME help browser
+        - yelp-libs                        # Removes libraries associated with Yelp
+        - yelp-xsl                         # Removes XSL stylesheets used by Yelp
          
 #######################
 ##  GNOME extensions ##
@@ -284,8 +303,8 @@ modules:
       nonfree: rpmfusion
     install:
       packages:
-        - deadbeef
-        - deadbeef-plugins
+        - deadbeef                         # Minimalist audio player for GNU/Linux
+        - deadbeef-plugins                 # Essential playback plugins for DeaDBeeF
         
   # Set DeaDBeeF to dark theme and delete mpris.so – mpris causes cursor micro stutters when switching tracks:
   - type: script
@@ -337,18 +356,18 @@ modules:
   - type: systemd
     system:
       enabled:
-        - gdm.service
-        - systemd-timesyncd.service
-        - systemd-resolved.service
-        - rechunker-group-fix.service
-        - me.proton.vpn.split_tunneling.service
-        - btrbk.timer
+        - gdm.service                              # Enables GNOME Display Manager on boot
+        - systemd-timesyncd.service                # Enables lightweight network time sync
+        - systemd-resolved.service                 # Enables local DNS resolution daemon
+        - rechunker-group-fix.service              # (Custom Script) Fixes OSTree chunking groups
+        - me.proton.vpn.split_tunneling.service    # Enables ProtonVPN split tunneling backend
+        - btrbk.timer                              # Enables btrfs backup timer routine
       disabled:
-        - rpm-ostree-countme.timer
+        - rpm-ostree-countme.timer                 # Disables sending analytics/counting data to Fedora
       masked:
-        - bootc-fetch-apply-updates.timer
-        - bootc-fetch-apply-updates.service
-        - systemd-remount-fs.service
+        - bootc-fetch-apply-updates.timer          # Stops automatic bootc fetches (manual control only)
+        - bootc-fetch-apply-updates.service        # Stops automatic bootc updates
+        - systemd-remount-fs.service               # Masks remount service (often unnecessary on OSTree)
     # user:
     #  enabled:
         # - some_service.service
