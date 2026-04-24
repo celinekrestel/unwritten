@@ -281,7 +281,6 @@ modules:
         - yelp-libs                        # Removes libraries associated with Yelp
         - yelp-xsl                         # Removes XSL stylesheets used by Yelp
         - nfs-utils                        # Removes the background daemon for mounting Linux NFS network shares
-        - mdadm                            # Removes standard Linux utility for managing and monitoring software RAID arrays
         
          
 ########################
