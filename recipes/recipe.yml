@@ -9,13 +9,13 @@
 ##########################################
 ##########################################
 
-#################################################
-## Find a removal log at the end of this file. ##
-#################################################
+###################################################
+##  Find a removal log at the end of this file.  ##
+###################################################
 
-#########################################
-## Image metadata & base configuration ##
-#########################################
+###########################################
+##  Image metadata & base configuration  ##
+###########################################
 
 name: unwritten
 description: Unwritten 44 
@@ -37,9 +37,9 @@ modules:
       - source: system                     # Copies local ./system directory files over to /
         destination: /
 
-######################################################
-## Remove packages from the fedora-bootc base image ##
-######################################################
+########################################################
+##  Remove packages from the fedora-bootc base image  ##
+########################################################
 
   - type: dnf
     remove:
@@ -54,9 +54,9 @@ modules:
     snippets:
       - rm -f /usr/bin/chsh /usr/bin/lchsh # Footgun. see https://github.com/ublue-os/main/issues/598
 
-#######################################
-## Media Repositories & Reprioritize ##
-#######################################
+#########################################
+##  Media Repositories & Reprioritize  ##
+#########################################
 
   - type: script
     snippets:
@@ -83,9 +83,9 @@ modules:
     snippets:
       - dnf5 versionlock add intel-gmmlib intel-mediasdk intel-vpl-gpu-rt libheif libva libva-intel-media-driver mesa-dri-drivers mesa-filesystem mesa-libEGL mesa-libGL mesa-libgbm mesa-va-drivers mesa-vulkan-drivers
 
-##############################################
-## Core Software, Utilities, and GNOME Base ##
-##############################################
+################################################
+##  Core Software, Utilities, and GNOME Base  ##
+################################################
 
   - type: dnf
     repos:
@@ -94,19 +94,19 @@ modules:
         - ublue-os/packages
     install:
       packages:
-        ###################################
-        ##  Hardware & System Sensors    ##
-        ###################################
+      
+        #################################
+        ##  Hardware & System Sensors  ##
+        #################################
+        
         - alsa-firmware                    # Firmware for Advanced Linux Sound Architecture
         - alsa-sof-firmware                # Sound Open Firmware. Crucial for modern Intel/AMD audio DSPs
-        - alsa-tools-firmware              # Firmware loader tools for specific ALSA sound cards
         - evtest                           # Input device event monitor and query tool
         - hplip                            # HP Linux Imaging and Printing suite
         - inxi                             # Feature-rich command line system information script
         - libratbag-ratbagd                # Daemon for configuring programmable gaming mice
         - libsane-hpaio                    # HP network scanner support (part of HPLIP)
         - lshw                             # Detailed hardware lister utility
-        - mangohud                         # Vulkan/OpenGL overlay for monitoring FPS and thermals
         - nvme-cli                         # Command-line tool for managing NVMe SSDs
         - nvtop                            # Task monitor specifically for GPUs (AMD, Intel, NVIDIA)
         - openrgb-udev-rules               # Hardware access rules for OpenRGB lighting control
@@ -115,9 +115,10 @@ modules:
         - smartmontools                    # S.M.A.R.T. disk health monitoring utilities
         - solaar-udev                      # Access rules for Solaar (Logitech receiver manager)
 
-        ###################################
-        ##  System Tools & Utilities     ##
-        ###################################
+        ################################
+        ##  System Tools & Utilities  ##
+        ################################
+        
         - atuin                            # Magical shell history synced across multiple devices
         - bc                               # Basic Calculator. CLI tool for mathematical processing
         - borgbackup                       # Deduplicating archiver with compression and encryption
@@ -128,7 +129,6 @@ modules:
         - clamav-freshclam                 # Auto-updater for ClamAV virus signature databases
         - cups                             # Common UNIX Printing System, required for printing
         - distrobox                        # Run any Linux distribution inside your terminal
-        - fedora-repos-archive             # Access to archived, older Fedora repositories
         - firewalld                        # Dynamic firewall management daemon
         - flatpak                          # Linux application sandboxing and distribution framework
         - flatpak-spawn                    # Run host commands from inside Flatpak sandboxes
@@ -138,7 +138,6 @@ modules:
         - git                              # Distributed version control system
         - gum                              # Tool for creating glamorous shell scripts
         - lynis                            # Security auditing tool for Unix-like systems
-        - mbuffer                          # Tool for buffering data streams
         - micro                            # Modern and intuitive terminal-based text editor
         - openssl                          # Toolkit for TLS/SSL cryptographic protocols
         - pv                               # Pipe Viewer, monitors the progress of data in pipelines
@@ -154,27 +153,29 @@ modules:
         - zstd                             # Zstandard fast real-time compression algorithm
         - zsh                              # The Z shell, a highly customizable bash alternative
 
-        ###################################
-        ##  Networking Tools             ##
-        ###################################
-        - gvfs-smb                         # Windows file sharing (SMB) network support for GNOME
+        ########################
+        ##  Networking Tools  ##
+        ########################
+        
         - NetworkManager-config-connectivity-fedora # NetworkManager connectivity checks for Fedora
         - NetworkManager-openvpn           # OpenVPN integration for NetworkManager
         - NetworkManager-wifi              # Core WiFi support for NetworkManager
         - wireguard-tools                  # Utilities for managing the WireGuard VPN protocol
 
-        ###################################
-        ##  Media & Codecs               ##
-        ###################################
+        ######################
+        ##  Media & Codecs  ##
+        ######################
+        
         - fdk-aac                          # High-quality AAC audio codec command line tools
         - heif-pixbuf-loader               # Allows GTK apps to natively render HEIF/HEIC images
         - libfdk-aac                       # Shared library for the FDK AAC codec
         - libva-utils                      # Collection of testing utilities for VA-API
         - pipewire-libs-extra              # Extra PipeWire libraries for advanced audio routing
 
-        ###################################
-        ##  GNOME Components             ##
-        ###################################
+        ########################
+        ##  GNOME Components  ##
+        ########################
+        
         - f43-backgrounds-gnome            # Standard Fedora 43 desktop wallpapers
         - gdm                              # GNOME Display Manager (the login screen)
         - glycin-thumbnailer               # Sandboxed image thumbnailer used by modern GNOME apps
@@ -195,9 +196,10 @@ modules:
         - xdg-desktop-portal-gnome         # GNOME backend for Flatpak file/screen-sharing portals
         - xdg-user-dirs-gtk                # Manages localized user directories (Documents, Downloads)
 
-        ###################################
-        ##  Fonts, Themes & L10N         ##
-        ###################################
+        ############################
+        ##  Fonts, Themes & L10N  ##
+        ############################
+        
         - adw-gtk3-theme                   # Libadwaita styling for legacy GTK3 applications
         - fira-code-fonts                  # Monospace font with programming ligatures
         - glibc-langpack-de                # German language pack for GNU C Library
@@ -211,9 +213,10 @@ modules:
         - ibus                             # Intelligent Input Bus, for multilingual keyboard input
         - jetbrains-mono-fonts-all         # Excellent monospace font designed for developers
 
-        ###################################
-        ##  User Applications            ##
-        ###################################
+        #########################
+        ##  User Applications  ##
+        #########################
+        
         - firefox                          # The Mozilla Firefox web browser
 
   - type: script
@@ -222,9 +225,9 @@ modules:
       - swap-kernel.sh
       - sudont.sh
 
-##################
-## niri section ##
-##################
+####################
+##  niri section  ##
+####################
 
   # Follow these instructions if you want to add niri:
   # 1. Add this to the dnf ublue-os/packages list above: - mate-polkit
@@ -261,9 +264,9 @@ modules:
   #      - webapp-manager
 
 
-###################
-##  DNF removals ##
-###################
+####################
+##  DNF removals  ##
+####################
 
   - type: dnf
     repos:
@@ -277,10 +280,13 @@ modules:
         - yelp                             # Removes the default GNOME help browser
         - yelp-libs                        # Removes libraries associated with Yelp
         - yelp-xsl                         # Removes XSL stylesheets used by Yelp
+        - nfs-utils                        # Removes the background daemon for mounting Linux NFS network shares
+        - mdadm                            # Removes standard Linux utility for managing and monitoring software RAID arrays
+        
          
-#######################
-##  GNOME extensions ##
-#######################
+########################
+##  GNOME extensions  ##
+########################
 
   - type: gnome-extensions        
     install:
@@ -292,9 +298,9 @@ modules:
       # GSConnect, i.e. 1319 (installed as rpm, see above)          https://extensions.gnome.org/extension/1319/gsconnect/
       # Caffeine, i.e. 517 (installed as rpm, see above)            https://extensions.gnome.org/extension/517/caffeine/
 
-###############
-##  DeaDBeeF ##
-###############
+################
+##  DeaDBeeF  ##
+################
 
   # DeaDBeeF (make sure these are `the last` rpm packages to be installed):
   - type: dnf
@@ -311,9 +317,9 @@ modules:
     scripts:
       - deadbeef.sh
 
-###############
-##  Stamp it ##
-###############
+################
+##  Stamp it  ##
+################
 
   - type: os-release
     properties:
@@ -348,9 +354,9 @@ modules:
       - dnf5 versionlock clear
       - dnf5 clean all
 
-#######################
-##  Systemd services ##
-#######################
+########################
+##  Systemd services  ##
+########################
 
   # Enable, disable and mask systemd services:
   - type: systemd
@@ -372,9 +378,9 @@ modules:
     #  enabled:
         # - some_service.service
 
-#######################
-##  Kernel arguments ##
-#######################
+########################
+##  Kernel arguments  ##
+########################
 
   # Set kernel arguments for disabling plymouth (since it is not part of Unwritten):
   - type: kargs
@@ -388,25 +394,31 @@ modules:
     kargs:
       - hid_apple.fnmode=2
 
-################
-##  Initramfs ##
-################
+#################
+##  Initramfs  ##
+#################
 
   - type: initramfs
 
 
-####################
-##  Image signing ##
-####################
+#####################
+##  Image signing  ##
+#####################
 
  # Set up policy & signing files for your signed image:
   - type: signing 
   
-##########################################
-##########################################
-## My removal list for future reference:##
-##########################################
-##########################################
+###########################################
+###########################################
+##  My removal list for future reference ##
+###########################################
+###########################################
+
+# 2026-04-24 removals (listed for possible debugging):
+  # - fedora-repos-archive             # Access to archived, older Fedora repositories
+  # - mbuffer
+  # - alsa-tools-firmware              # Firmware loader tools for specific ALSA sound cards
+  # - gvfs-smb                         # Windows file sharing (SMB) network support for GNOME
 
 # WLAN and Bluetooth Firmware:
   # - atheros-firmware
