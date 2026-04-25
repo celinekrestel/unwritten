@@ -112,18 +112,6 @@ eval "$(starship init zsh)"
 
 ---
 
-## Variable Refresh Rate
-
-[Refine](https://flathub.org/en-GB/apps/search?q=refine) lets you adjust advanced GNOME settings, including VRR.
-
-1. Enable VRR in Refine.
-2. Then enable it in the standard GNOME display settings.
-
-> [!IMPORTANT]
-> Once VRR is active, disable VSync in games — the two features conflict with each other.
-
----
-
 ## Troubleshooting
 
 ### GDM does not start at boot
