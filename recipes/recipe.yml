@@ -20,7 +20,7 @@
 name: unwritten
 description: Unwritten 44 
 base-image: quay.io/fedora/fedora-bootc
-image-version: 44
+image-version: 44                          # When updating: also update f44-backgrounds-gnome (see blow)
 cosign-version: none                       # Container signing via cosign
 nushell-version: none                      # BlueBuild scripting during the build process
 blue-build-tag: none                       # BlueBuild won’t append its tags to this image
@@ -81,7 +81,7 @@ modules:
 
   - type: script
     snippets:
-      - dnf5 versionlock add intel-gmmlib intel-mediasdk intel-vpl-gpu-rt libheif libva libva-intel-media-driver mesa-dri-drivers mesa-filesystem mesa-libEGL mesa-libGL mesa-libgbm mesa-va-drivers mesa-vulkan-drivers
+      - dnf5 versionlock add libheif libva mesa-dri-drivers mesa-filesystem mesa-libEGL mesa-libGL mesa-libgbm mesa-va-drivers mesa-vulkan-drivers ocl-icd
 
 ################################################
 ##  Core Software, Utilities, and GNOME Base  ##
@@ -176,7 +176,7 @@ modules:
         ##  GNOME Components  ##
         ########################
         
-        - f43-backgrounds-gnome            # Standard Fedora 43 desktop wallpapers
+        - f44-backgrounds-gnome            # Standard Fedora 44 desktop wallpapers
         - gdm                              # GNOME Display Manager (the login screen)
         - glycin-thumbnailer               # Sandboxed image thumbnailer used by modern GNOME apps
         - gnome-bluetooth                  # Bluetooth pairing and management tools for GNOME
@@ -340,19 +340,6 @@ modules:
       - curl --retry 3 -Lo /etc/flatpak/remotes.d/flathub.flatpakrepo https://dl.flathub.org/repo/flathub.flatpakrepo
       - rm -f /usr/lib/systemd/system/flatpak-add-fedora-repos.service
 
-######################
-##  Make it clean.  ##
-######################
-  - type: script
-    snippets:
-      - rm -rf /usr/share/doc
-      - rm -rf /usr/src
-      - rpm --erase --nodeps kernel-cachyos-devel || true
-      - rpm --erase --nodeps kernel-cachyos-lts-devel || true
-      - rm -f /tmp/ltsbuild
-      - dnf5 versionlock clear
-      - dnf5 clean all
-
 ########################
 ##  Systemd services  ##
 ########################
@@ -398,6 +385,20 @@ modules:
 #################
 
   - type: initramfs
+
+
+######################
+##  Make it clean.  ##
+######################
+  - type: script
+    snippets:
+      - rm -rf /usr/share/doc
+      - rm -rf /usr/src
+      - rpm --erase --nodeps kernel-cachyos-devel || true
+      - rpm --erase --nodeps kernel-cachyos-lts-devel || true
+      - rm -f /tmp/ltsbuild
+      - dnf5 versionlock clear
+      - dnf5 clean all
 
 
 #####################
@@ -448,7 +449,7 @@ modules:
   # - squashfs-tools
   # - squashfuse-libs
 
-# Android mounting. It’ done via gvfs-mtp by GNOME now.
+# Android mounting. It's done via gvfs-mtp by GNOME now.
   # - jmtpfs
 
 # mpv. There’s a Flatpak available.
@@ -476,7 +477,7 @@ modules:
   # - ffmpeg-libs
   # - ffmpegthumbnailer
 
-# Lecacy commands like `ipconfig` and `route`:
+# Legacy commands like `ipconfig` and `route`:
   # - net-tools
   # Use `ip addr` or `ip link` instead.
 
