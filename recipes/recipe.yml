@@ -59,28 +59,6 @@ modules:
     snippets:
       - rm -f /usr/bin/chsh /usr/bin/lchsh # Footgun. see https://github.com/ublue-os/main/issues/598
 
-#########################################
-##  Media Repositories & Reprioritize  ##
-#########################################
-# Why?
-# 1) Firefox (rpm, native) uses host Mesa for VA-API and host libvacodec for decoding. 
-# Wait for Firefox (Flatpak) to go along with KeePassXC (Flatpak) — then switch.
-# Reason: not primarily clipboard-leak, but phishing protection.
-# → KeePassXC browser integration matches the stored URL against the page.
-# 2) HEIC thumbnailing in Nautilus — glycin-thumbnailer and heif-pixbuf-loader run on the host against host libheif.
-
-  - type: dnf
-    repos:
-      cleanup: true
-      nonfree: rpmfusion
-    install:
-      packages:
-        - libheif
-        - libheif-freeworld
-        - heif-pixbuf-loader
-        - mesa-va-drivers-freeworld
-        - libavcodec-freeworld
-
 ####################
 ##  Version lock  ##
 ####################
@@ -179,9 +157,7 @@ modules:
         
         - fdk-aac                          # High-quality AAC audio codec command line tools
         - heif-pixbuf-loader               # Allows GTK apps to natively render HEIF/HEIC images
-        - libfdk-aac                       # Shared library for the FDK AAC codec
         - libva-utils                      # Collection of testing utilities for VA-API
-        - pipewire-libs-extra              # Extra PipeWire libraries for advanced audio routing
 
         ########################
         ##  GNOME Components  ##
@@ -197,7 +173,6 @@ modules:
         - gnome-settings-daemon            # Background daemon handling GTK and session settings
         - gnome-shell                      # The core user interface of the GNOME desktop
         - gnome-shell-extension-caffeine   # Extension to keep the screen awake
-        - gnome-shell-extension-gsconnect  # KDE Connect implementation for GNOME
         - gnome-shell-extension-appindicator # https://extensions.gnome.org/extension/615/appindicator-support/
         - gnome-shell-extension-just-perfection # https://extensions.gnome.org/extension/615/appindicator-support/
         - gvfs-fuse                        # FUSE support for the GNOME Virtual File System
@@ -240,6 +215,34 @@ modules:
       - proton_vpn_app.sh
       - swap-kernel.sh
       - sudont.sh
+
+#############################################
+##  Media codecs (RPM Fusion, host only)   ##
+#############################################
+# Deliberately placed AFTER the main package block: the -freeworld packages
+# replace their Fedora counterparts, so those have to be installed first.
+#
+# Why any codec stack is on the host at all:
+# 1) Firefox (native rpm) uses host Mesa for VA-API and libavcodec for decode.
+#    Native because KeePassXC integration needs to spawn a host process. The Flatpak
+#    workarounds require granting Firefox host-exec rights, which defeats the sandbox.
+#    What's at stake is phishing protection: the extension matches the stored URL
+#    against the page, so a tired human isn't the last line of defence.
+#    Revisit when the native-messaging portal lands upstream.
+# 2) HEIC thumbnailing in Nautilus: glycin-thumbnailer and heif-pixbuf-loader run
+#    on the host against host libheif.
+# Everything else (mpv, Steam, all other Flatpaks) gets hardware decode from the
+# Freedesktop runtime's → extra branches, independent of this block.
+gnom
+  - type: dnf
+    repos:
+      cleanup: true
+      nonfree: rpmfusion
+    install:
+      packages:
+        - libheif-freeworld          # HEIC decode; Fedora's libheif has HEVC stripped
+        - mesa-va-drivers-freeworld  # VA-API H.264/HEVC; Fedora's mesa has codecs stripped
+        - libavcodec-freeworld       # H.264/HEVC decode for native Firefox
 
 ####################
 ##  DNF removals  ##
