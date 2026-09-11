@@ -155,7 +155,6 @@ modules:
         ##  Media & Codecs  ##
         ######################
         
-        - fdk-aac                          # High-quality AAC audio codec command line tools
         - heif-pixbuf-loader               # Allows GTK apps to natively render HEIF/HEIC images
         - libva-utils                      # Collection of testing utilities for VA-API
 
