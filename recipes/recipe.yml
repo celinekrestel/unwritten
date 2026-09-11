@@ -155,8 +155,11 @@ modules:
         ##  Media & Codecs  ##
         ######################
         
-        - heif-pixbuf-loader               # Allows GTK apps to natively render HEIF/HEIC images
         - libva-utils                      # Collection of testing utilities for VA-API
+        # Needed for thumnbailing in Nautilus:
+	- gstreamer1-plugin-libav          # ffmpeg-based decoders (H.264/HEVC via libavcodec-freeworld)
+        - gstreamer1-plugins-good          # Core well-supported plugin set
+        - gstreamer1-plugins-bad-free      # Parsers and demuxers incl. HEVC
 
         ########################
         ##  GNOME Components  ##
@@ -355,7 +358,8 @@ modules:
       - rm -rf /usr/src
       - dnf5 versionlock clear
       - dnf5 clean all
-
+      - rm -f /etc/yum.repos.d/rpmfusion-nonfree-nvidia-driver.repo
+      - rm -f /etc/yum.repos.d/rpmfusion-nonfree-steam.repo
 
 #####################
 ##  Image signing  ##
@@ -369,6 +373,8 @@ modules:
 ##  My removal list for future reference ##
 ###########################################
 ###########################################
+
+# ocl-icd is gone. → no host OpenCL. Everything GPU-computeish is a Flatpak anyway.
 
 # 2026-04-24 removals (listed for possible debugging):
   # - fedora-repos-archive             # Access to archived, older Fedora repositories
@@ -386,6 +392,7 @@ modules:
   # - iwlwifi-dvm-firmware   # for legacy Intel WLAN chips
   # - iwlwifi-mvm-firmware   # for modern Intel WLAN chips
   # - iwlwifi-mld-firmware   # for even more modern Intel WLAN chips
+  # - fdk-aac-free	     # PipeWire uses this for AAC over Bluetooth
 
 # Intel support:
   # - intel-vaapi-driver
