@@ -233,7 +233,7 @@ modules:
 #    on the host against host libheif.
 # Everything else (mpv, Steam, all other Flatpaks) gets hardware decode from the
 # Freedesktop runtime's → extra branches, independent of this block.
-gnom
+
   - type: dnf
     repos:
       cleanup: true
