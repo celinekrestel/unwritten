@@ -62,27 +62,24 @@ modules:
 #########################################
 ##  Media Repositories & Reprioritize  ##
 #########################################
+# Why?
+# 1) Firefox (rpm, native) uses host Mesa for VA-API and host libvacodec for decoding. 
+# Wait for Firefox (Flatpak) to go along with KeePassXC (Flatpak) — then switch.
+# Reason: not primarily clipboard-leak, but phishing protection.
+# → KeePassXC browser integration matches the stored URL against the page.
+# 2) HEIC thumbnailing in Nautilus — glycin-thumbnailer and heif-pixbuf-loader run on the host against host libheif.
 
-  - type: script
-    snippets:
-      - dnf5 config-manager addrepo --from-repofile='https://negativo17.org/repos/fedora-multimedia.repo'
-      - dnf5 config-manager setopt fedora-multimedia.priority=90
-      - dnf5 config-manager setopt fedora-cisco-openh264.enabled=0
-  
   - type: dnf
+    repos:
+      cleanup: true
+      nonfree: rpmfusion
     install:
-      # skip-unavailable: true
       packages:
-        - libheif                          # Support for Apple HEIC photo format
-        - libva                            # Core library for hardware video acceleration (VA-API)
-        - mesa-dri-drivers                 # OpenGL drivers
-        - mesa-filesystem                  # Base directory structures for Mesa
-        - mesa-libEGL                      # EGL API (Crucial for Wayland display servers)
-        - mesa-libGL                       # Standard OpenGL library
-        - mesa-libgbm                      # Generic Buffer Management (Crucial for Wayland compositing)
-        - mesa-va-drivers                  # Unrestricted VA-API drivers for H.264/HEVC decoding
-        - mesa-vulkan-drivers              # Vulkan drivers (RADV for AMD, ANV for Intel)
-        - ocl-icd                          # OpenCL support for GPU compute tasks (Blender, etc.)
+        - libheif
+        - libheif-freeworld
+        - heif-pixbuf-loader
+        - mesa-va-drivers-freeworld
+        - libavcodec-freeworld
 
 ####################
 ##  Version lock  ##
