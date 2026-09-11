@@ -156,8 +156,7 @@ modules:
         ######################
         
         - libva-utils                      # Collection of testing utilities for VA-API
-        # Needed for thumnbailing in Nautilus:
-	- gstreamer1-plugin-libav          # ffmpeg-based decoders (H.264/HEVC via libavcodec-freeworld)
+        - gstreamer1-plugin-libav          # ffmpeg-based decoders (H.264/HEVC via libavcodec-freeworld)
         - gstreamer1-plugins-good          # Core well-supported plugin set
         - gstreamer1-plugins-bad-free      # Parsers and demuxers incl. HEVC
 
