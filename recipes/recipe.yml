@@ -51,7 +51,7 @@ modules:
       packages:
         # - console-login-helper-messages
         - chrony                           # Replaced with systemd-timesyncd (see systemd section)
-        - sssd* # Not needed if only local users are used
+        - sssd* 			   # Not needed if only local users are used
         - qemu-user-static*                # Not needed unless cross-arch dev is required
         - toolbox                          # Replaced by distrobox (see below)
 
@@ -120,7 +120,7 @@ modules:
         - firewalld                        # Dynamic firewall management daemon
         - flatpak                          # Linux application sandboxing and distribution framework
         - flatpak-spawn                    # Run host commands from inside Flatpak sandboxes
-        - fuse                             # Filesystem in Userspace (crucial for AppImages)
+        - fuse                             # Filesystem in Userspace (required for 'borg mount')
         - fuse-libs                        # Libraries for Filesystem in Userspace
         - fzf                              # Command-line fuzzy finder for fast terminal searches
         - git                              # Distributed version control system
@@ -194,7 +194,7 @@ modules:
         - glibc-langpack-en                # English language pack for GNU C Library
         - glibc-langpack-fr                # French language pack for GNU C Library
         - google-noto-sans-balinese-fonts  # Font support for Balinese script
-        - google-noto-sans-cjk-vf-fonts       # Font support for Chinese, Japanese, and Korean
+        - google-noto-sans-cjk-vf-fonts    # Font support for Chinese, Japanese, and Korean
         - google-noto-sans-javanese-fonts  # Font support for Javanese script
         - google-noto-sans-sundanese-fonts # Font support for Sundanese script
         - ibm-plex-sans-fonts              # IBM's open-source corporate typeface
@@ -215,7 +215,6 @@ modules:
     scripts:
       - proton_vpn_app.sh
       - swap-kernel.sh
-      - sudont.sh
 
 #############################################
 ##  Media codecs (RPM Fusion, host only)   ##
@@ -262,8 +261,15 @@ modules:
         - yelp-libs                        # Removes libraries associated with Yelp
         - yelp-xsl                         # Removes XSL stylesheets used by Yelp
         - nfs-utils                        # Removes the background daemon for mounting Linux NFS network shares
+        - nfsv3-client-utils               # No NFS on this system
+        - nfsv4-client-utils               # No NFS on this system
+        - nfs-common-utils                 # SUID mount.nfs helper
+        - qemu-kvm-core                    # Pulled in by <culprit>; no VMs on this system
+        - qemu-system-x86-core
+        - qemu-device-display-virtio-gpu
+        - qemu-device-display-virtio-vga
+        - qemu-common                      # SUID qemu-bridge-helper
         
-         
 ########################
 ##  GNOME extensions  ##
 ########################
@@ -284,6 +290,14 @@ modules:
   - type: script
     snippets:
       - authselect disable-feature with-fingerprint
+
+################
+##  Sudon’t   ##
+################
+
+  - type: script
+    scripts:
+      - sudont.sh
 
 ################
 ##  Stamp it  ##

@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
-# Install Proton VPN app:
+set -euo pipefail
 
-wget "https://repo.protonvpn.com/fedora-$(rpm -E %fedora)-stable/protonvpn-stable-release/protonvpn-stable-release-1.0.3-1.noarch.rpm"
-dnf5 install -y ./protonvpn-stable-*.rpm && dnf5 makecache --refresh
-# `proton-vpn-gnome-desktop` will try to run a postcript to enable its systemd service; we will deny this by setting `noscript`,
-# and enable the service manually on the client-side (see README.md):
-dnf5 install -y proton-vpn-gnome-desktop --setopt=tsflags=noscripts
-rm -f protonvpn-stable-release-*.rpm || true
+rel="protonvpn-stable-release-1.0.3-1.noarch.rpm"
+wget -q "https://repo.protonvpn.com/fedora-$(rpm -E %fedora)-stable/protonvpn-stable-release/${rel}"
+dnf5 -y install "./${rel}"
+rm -f "./${rel}"
+
+# %post tries to enable the systemd unit, which fails in a container build.
+# The unit is enabled in the recipe's systemd module instead.
+dnf5 -y install --setopt=tsflags=noscripts proton-vpn-gnome-desktop
+
+rpm -q proton-vpn-gnome-desktop >/dev/null
