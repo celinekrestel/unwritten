@@ -131,7 +131,6 @@ modules:
         - pv                               # Pipe Viewer, monitors the progress of data in pipelines
         - rsync				   # Copy files
         - symlinks                         # A tiny utility to find and fix broken symlinks
-        - systemd-container                # Tools for managing local containers (machinectl)
         - systemd-oomd-defaults            # Out-of-memory daemon default configuration
         - tealdeer                         # Fast Rust implementation of tldr (simplified man pages)
         - unzip                            # Utility to extract zip archives
@@ -264,11 +263,6 @@ modules:
         - nfsv3-client-utils               # No NFS on this system
         - nfsv4-client-utils               # No NFS on this system
         - nfs-common-utils                 # SUID mount.nfs helper
-        - qemu-kvm-core                    # Pulled in by <culprit>; no VMs on this system
-        - qemu-system-x86-core
-        - qemu-device-display-virtio-gpu
-        - qemu-device-display-virtio-vga
-        - qemu-common                      # SUID qemu-bridge-helper
         
 ########################
 ##  GNOME extensions  ##
@@ -324,7 +318,7 @@ modules:
         - gdm.service                              # Enables GNOME Display Manager on boot
         - systemd-timesyncd.service                # Enables lightweight network time sync
         - systemd-resolved.service                 # Enables local DNS resolution daemon
-        - me.proton.vpn.split_tunneling.service    # Enables ProtonVPN split tunneling backend
+        - me.proton.vpn.split_tunneling.service    # Proton VPN daemon
         - btrbk.timer                              # Enables btrfs backup timer routine
         - scx_loader.service
         - firewalld.service
@@ -386,6 +380,9 @@ modules:
 ##  My removal list for future reference ##
 ###########################################
 ###########################################
+
+# Emulation:
+  # - systemd-container                # Tools for managing local containers (machinectl)
 
 # ocl-icd is gone. → no host OpenCL. Everything GPU-computeish is a Flatpak anyway.
 
