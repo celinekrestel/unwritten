@@ -74,8 +74,6 @@ modules:
   - type: dnf
     repos:
       cleanup: true
-      copr:
-        - ublue-os/packages
     install:
       packages:
       
@@ -238,7 +236,6 @@ modules:
       nonfree: rpmfusion
     install:
       packages:
-        - libheif-freeworld          # HEIC decode; Fedora's libheif has HEVC stripped
         - mesa-va-drivers-freeworld  # VA-API H.264/HEVC; Fedora's mesa has codecs stripped
         - libavcodec-freeworld       # H.264/HEVC decode for native Firefox
 
