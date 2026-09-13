@@ -210,7 +210,16 @@ modules:
   - type: script
     scripts:
       - proton_vpn_app.sh 	# To test the advanced kill switch, do this → reboot, TTY, curl before login  (curl -m 5 -sI https://example.com >/dev/null && echo "LEAK: traffic passes" || echo "blocked")
-      - swap-kernel.sh
+
+  - type: dnf
+    repos:
+      cleanup: true
+      copr:
+        - bieszczaders/kernel-cachyos-addons
+    install:
+      packages:
+        - scx-scheds
+        - scx-tools
 
 #############################################
 ##  Media codecs (RPM Fusion, host only)   ##
@@ -316,7 +325,6 @@ modules:
         - systemd-resolved.service                 # Enables local DNS resolution daemon
         - me.proton.vpn.split_tunneling.service    # Proton VPN daemon
         - btrbk.timer                              # Enables btrfs backup timer routine
-        - scx_loader.service
         - firewalld.service
       disabled:
         - rpm-ostree-countme.timer                 # Disables sending analytics/counting data to Fedora
