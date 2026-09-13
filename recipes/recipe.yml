@@ -112,7 +112,6 @@ modules:
         - borgbackup                       # Deduplicating archiver with compression and encryption
         - btop                             # Beautiful terminal resource monitor (CPU, memory, disks)
         - btrbk                            # Tool for creating snapshots/backups of btrfs subvolumes
-        - chezmoi                          # Secure dotfile manager for cross-machine sync
         - clamav                           # Open-source command-line antivirus engine
         - clamav-freshclam                 # Auto-updater for ClamAV virus signature databases
         - cups                             # Common UNIX Printing System, required for printing
@@ -174,7 +173,7 @@ modules:
         - gnome-shell                      # The core user interface of the GNOME desktop
         - gnome-shell-extension-caffeine   # Extension to keep the screen awake
         - gnome-shell-extension-appindicator # https://extensions.gnome.org/extension/615/appindicator-support/
-        - gnome-shell-extension-just-perfection # https://extensions.gnome.org/extension/615/appindicator-support/
+        - gnome-shell-extension-just-perfection
         - gvfs-fuse                        # FUSE support for the GNOME Virtual File System
         - gvfs-mtp                         # Media Transfer Protocol support (mounts Android phones)
         - nautilus                         # GNOME's default file manager (Files)
@@ -212,7 +211,7 @@ modules:
 
   - type: script
     scripts:
-      - proton_vpn_app.sh
+      - proton_vpn_app.sh 	# To test the advanced kill switch, do this → reboot, TTY, curl before login  (curl -m 5 -sI https://example.com >/dev/null && echo "LEAK: traffic passes" || echo "blocked")
       - swap-kernel.sh
 
 #############################################
@@ -273,7 +272,7 @@ modules:
       # - 7065    # Tiling Shell:                                   https://extensions.gnome.org/extension/7065/tiling-shell/
       - 5470      # Weather O’Clock:                                https://extensions.gnome.org/extension/5470/weather-oclock/
       - 5506    # User Avatar In Quick Settings:                    https://extensions.gnome.org/extension/5506/user-avatar-in-quick-settings/
-      # GSConnect, i.e. 1319 (installed as rpm, see above)          https://extensions.gnome.org/extension/1319/gsconnect/
+      # GSConnect, i.e. 1319           				    https://extensions.gnome.org/extension/1319/gsconnect/
       # Caffeine, i.e. 517 (installed as rpm, see above)            https://extensions.gnome.org/extension/517/caffeine/
 
 ##################
@@ -382,7 +381,7 @@ modules:
 ###########################################
 
 # Emulation:
-  # - systemd-container                # Tools for managing local containers (machinectl)
+  # - systemd-container                # Tools for managing local containers; machinectl/nspawn/vmspawn; Recommends qemu-kvm-core → 64M emulator. No VMs, no nspawn for this image.
 
 # ocl-icd is gone. → no host OpenCL. Everything GPU-computeish is a Flatpak anyway.
 
@@ -577,12 +576,10 @@ modules:
   #      - deadbeef                         # Minimalist audio player for GNU/Linux
   #      - deadbeef-plugins                 # Essential playback plugins for DeaDBeeF
         
-  # Set DeaDBeeF to dark theme and delete mpris.so – mpris causes cursor micro stutters when switching tracks:
+  # Set DeaDBeeF to dark theme:
   #- type: script
   #  scripts:
   #    - deadbeef.sh
-  
 # for /files/deadbeef.sh:
 # #!/bin/bash
 # sed -i 's/^Exec=deadbeef %F$/Exec=env GTK_THEME=Adwaita:dark deadbeef %F/' /usr/share/applications/deadbeef.desktop
-# rm -f /usr/lib64/deadbeef/mpris.so
