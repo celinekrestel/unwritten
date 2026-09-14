@@ -2,7 +2,7 @@
 
 ## About
 
-Unwritten is a custom [bootc](https://containers.github.io/bootc/) image based on **fedora-bootc**, tailored to my AMD CPU/GPU desktop. It ships with GNOME and the CachyOS kernel.
+Unwritten is a custom [bootc](https://containers.github.io/bootc/) image based on **fedora-bootc**, tailored to my AMD CPU/GPU desktop. It ships with the GNOME desktop.
 
 > [!IMPORTANT]
 > Unwritten uses **`run0`** instead of `sudo`. For certain commands, you will need to wrap them as **`run0 sh -c '$your_command$'`** — this is an SELinux constraint that may be resolved in a future release. You can also set SELinux to permissive mode (`setenforce 0`), though this is not recommended. Note that `sudo` remains available inside a distrobox environment.

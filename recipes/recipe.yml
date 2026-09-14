@@ -81,7 +81,8 @@ modules:
         - alsa-firmware                    # Firmware for Advanced Linux Sound Architecture
         - alsa-sof-firmware                # Sound Open Firmware. Crucial for modern Intel/AMD audio DSPs
         - evtest                           # Input device event monitor and query tool
-        - hplip                            # HP Linux Imaging and Printing suite
+        - hplip                            # HP Linux Imaging and Printing suite. Needed for the LaserJet 4000TN – hpcups renders on the PC and sends PCL.
+                                           # The printer's 1997 PostScript interpreter fails on PDFs with images no matter the converter (pdftops, gs, pdftocairo all tested 2026-09-14).
         - inxi                             # Feature-rich command line system information script
         - libratbag-ratbagd                # Daemon for configuring programmable gaming mice
         - lshw                             # Detailed hardware lister utility
@@ -337,9 +338,16 @@ modules:
   # and with 'run0 cat /sys/kernel/debug/sched/preempt' → '(full) lazy'.
   
   # For my Varmilo keyboard, so I don't have to press the 'FN' key to get 'F1'–'F12' working:
-  - type: kargs
-    kargs:
       - hid_apple.fnmode=2
+  # Transparent zstd:1 compression for the whole system-disk btrfs.
+  # Btrfs takes fs-wide options (compress, commit, ...) from the FIRST mount of a filesystem, which on
+  # bootc is /sysroot from the initrd via rootflags= — so compress=zstd:1 on the /var and /var/home
+  # fstab lines is ignored, and systemd-remount-fs (masked, and /var is not / under composefs) can't help.
+  # subvol=root MUST stay in the value: the install-time rootflags=subvol=root is still on the cmdline,
+  # and this form is correct whether the two get concatenated or the last one wins.
+  # Verify: findmnt -t btrfs -o TARGET,OPTIONS → /sysroot, /var and /var/home show compress=zstd:1.
+  # Only data written after this is compressed; do not defragment to recompress while btrbk snapshots exist.
+      - rootflags=subvol=root,compress=zstd:1
 
 #################
 ##  Initramfs  ##
