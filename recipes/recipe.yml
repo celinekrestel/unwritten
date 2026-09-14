@@ -2,16 +2,22 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 
 ##########################################
-##########################################
 ##          ##################          ##
 ##          ## Unwritten 44 ##          ##
 ##          ##################          ##
-##########################################
 ##########################################
 
 ###################################################
 ##  Find a removal log at the end of this file.  ##
 ###################################################
+
+###########################
+## What I am waiting for ##
+###########################
+
+# 1) Waiting for Firefox (Flatpak) to work well with KeePassXC. Then: Remove the RPM Fusion block, the two rm -f lines for the rpmfusion repo files at the end, adw-gtk3-theme, and probably libva-utils.
+
+# 2) Waiting for Proton VPN app (Flatpak) to provide the advanced kill switch. Then: delete the repo file in files/early, and remove 'me.proton.vpn.split_tunneling.service' from the systemd list. And remove proton_vpn_app.sh from files/scripts
 
 ###########################################
 ##  Image metadata & base configuration  ##
@@ -23,14 +29,13 @@ base-image: quay.io/fedora/fedora-bootc
 image-version: 44                          
 cosign-version: none      # Container signing via cosign
 nushell-version: none     # BlueBuild scripting during the build process
-blue-build-tag: none      # BlueBuild won’t append its tags to this image
+blue-build-tag: none      # BlueBuild won't append its tags to this image
 
 modules:
   - type: dnf
     install:
       packages:
         - fedora-logos   # Provides base Fedora visual assets
-        - dnf5-plugins   # Essential plugins for DNF5 (needed for COPR)
 
   - type: files
     files:
@@ -59,14 +64,6 @@ modules:
     snippets:
       - rm -f /usr/bin/chsh /usr/bin/lchsh # Footgun. see https://github.com/ublue-os/main/issues/598
 
-####################
-##  Version lock  ##
-####################
-  # Uncomment this section IF you add third party repos, such as rpmfusion; negativo 17 is set to priority 90 (sufficient)
-  #- type: script
-  #  snippets:
-  #    - dnf5 versionlock add libheif libva mesa-dri-drivers mesa-filesystem mesa-libEGL mesa-libGL mesa-libgbm mesa-va-drivers mesa-vulkan-drivers ocl-icd
-
 ################################################
 ##  Core Software, Utilities, and GNOME Base  ##
 ################################################
@@ -87,7 +84,6 @@ modules:
         - hplip                            # HP Linux Imaging and Printing suite
         - inxi                             # Feature-rich command line system information script
         - libratbag-ratbagd                # Daemon for configuring programmable gaming mice
-        - libsane-hpaio                    # HP network scanner support (part of HPLIP)
         - lshw                             # Detailed hardware lister utility
         - nvme-cli                         # Command-line tool for managing NVMe SSDs
         - nvtop                            # Task monitor specifically for GPUs (AMD, Intel, NVIDIA)
@@ -110,8 +106,6 @@ modules:
         - borgbackup                       # Deduplicating archiver with compression and encryption
         - btop                             # Beautiful terminal resource monitor (CPU, memory, disks)
         - btrbk                            # Tool for creating snapshots/backups of btrfs subvolumes
-        - clamav                           # Open-source command-line antivirus engine
-        - clamav-freshclam                 # Auto-updater for ClamAV virus signature databases
         - cups                             # Common UNIX Printing System, required for printing
         - distrobox                        # Run any Linux distribution inside your terminal
         - firewalld                        # Dynamic firewall management daemon
@@ -152,9 +146,9 @@ modules:
         ######################
         
         - libva-utils                      # Collection of testing utilities for VA-API
-        - gstreamer1-plugin-libav          # ffmpeg-based decoders (H.264/HEVC via libavcodec-freeworld)
+        # - gstreamer1-plugin-libav          # ffmpeg-based decoders (H.264/HEVC via libavcodec-freeworld)
         - gstreamer1-plugins-good          # Core well-supported plugin set
-        - gstreamer1-plugins-bad-free      # Parsers and demuxers incl. HEVC
+        # - gstreamer1-plugins-bad-free      # Parsers and demuxers incl. HEVC
 
         ########################
         ##  GNOME Components  ##
@@ -171,7 +165,6 @@ modules:
         - gnome-shell                      # The core user interface of the GNOME desktop
         - gnome-shell-extension-caffeine   # Extension to keep the screen awake
         - gnome-shell-extension-appindicator # https://extensions.gnome.org/extension/615/appindicator-support/
-        - gnome-shell-extension-just-perfection
         - gvfs-fuse                        # FUSE support for the GNOME Virtual File System
         - gvfs-mtp                         # Media Transfer Protocol support (mounts Android phones)
         - nautilus                         # GNOME's default file manager (Files)
@@ -184,18 +177,13 @@ modules:
         ##  Fonts, Themes & L10N  ##
         ############################
         
-        - adw-gtk3-theme                   # Libadwaita styling for legacy GTK3 applications
+        - adw-gtk3-theme                   # Libadwaita styling for legacy GTK3 applications; should leave with Firefox as soon as Firefox Flatpak is ready for KeePassXC integration
         - fira-code-fonts                  # Monospace font with programming ligatures
         - glibc-langpack-de                # German language pack for GNU C Library
         - glibc-langpack-en                # English language pack for GNU C Library
         - glibc-langpack-fr                # French language pack for GNU C Library
-        - google-noto-sans-balinese-fonts  # Font support for Balinese script
         - google-noto-sans-cjk-vf-fonts    # Font support for Chinese, Japanese, and Korean
-        - google-noto-sans-javanese-fonts  # Font support for Javanese script
-        - google-noto-sans-sundanese-fonts # Font support for Sundanese script
-        - ibm-plex-sans-fonts              # IBM's open-source corporate typeface
         - ibus                             # Intelligent Input Bus, for multilingual keyboard input
-        - jetbrains-mono-fonts-all         # Excellent monospace font designed for developers
 
         #########################
         ##  User Applications  ##
@@ -203,41 +191,40 @@ modules:
         
         - firefox                          # The Mozilla Firefox web browser
 
+##################
+##  Wallpapers  ##
+##################
+
   - type: script
     snippets:
-      - 'dnf5 -y install f$(rpm -E %fedora)-backgrounds-gnome'   # Wallpapers passend zur Fedora-Version
+      - 'dnf5 -y install f$(rpm -E %fedora)-backgrounds-gnome'   # Wallpapers that fit the current Fedora version
+
+######################
+##  Proton VPN app  ##
+######################
 
   - type: script
     scripts:
-      - proton_vpn_app.sh 	# To test the advanced kill switch, do this → reboot, TTY, curl before login  (curl -m 5 -sI https://example.com >/dev/null && echo "LEAK: traffic passes" || echo "blocked")
+      - proton_vpn_app.sh 	
+ # To test the advanced kill switch, do this → reboot, TTY, curl before login  (curl -m 5 -sI https://example.com >/dev/null && echo "LEAK: traffic passes" || echo "blocked")
 
-  - type: dnf
-    repos:
-      cleanup: true
-      copr:
-        - bieszczaders/kernel-cachyos-addons
-    install:
-      packages:
-        - scx-scheds
-        - scx-tools
+###########################################################################################
+##  Media codecs (RPM Fusion) — REVISIT when the native-messaging portal lands upstream. ##
+###########################################################################################
 
-#############################################
-##  Media codecs (RPM Fusion, host only)   ##
-#############################################
+# This section goes down as as soon I switch to Firefox (Flatpak).
+
 # Deliberately placed AFTER the main package block: the -freeworld packages
 # replace their Fedora counterparts, so those have to be installed first.
-#
-# Why any codec stack is on the host at all:
-# 1) Firefox (native rpm) uses host Mesa for VA-API and libavcodec for decode.
-#    Native because KeePassXC integration needs to spawn a host process. The Flatpak
-#    workarounds require granting Firefox host-exec rights, which defeats the sandbox.
-#    What's at stake is phishing protection: the extension matches the stored URL
-#    against the page, so a tired human isn't the last line of defence.
-#    Revisit when the native-messaging portal lands upstream.
-# 2) HEIC thumbnailing in Nautilus: glycin-thumbnailer and heif-pixbuf-loader run
-#    on the host against host libheif.
-# Everything else (mpv, Steam, all other Flatpaks) gets hardware decode from the
-# Freedesktop runtime's → extra branches, independent of this block.
+
+# Why I include a codec stack on the host at all:
+
+# Firefox (native rpm) uses host Mesa for VA-API and libavcodec for decode.
+# Native Firefox is needed because KeePassXC integration needs to spawn a host process. 
+# The Flatpak workarounds require granting Firefox host-exec rights, which defeats the sandbox.
+# What's at stake is phishing protection: the extension matches the stored URL against the page.
+
+# Everything else (mpv, Steam, all other Flatpaks) gets hardware decode from the Freedesktop runtime's → extra branches, independent of this block.
 
   - type: dnf
     repos:
@@ -275,23 +262,19 @@ modules:
 
   - type: gnome-extensions        
     install:
-      # - 7065    # Tiling Shell:                                   https://extensions.gnome.org/extension/7065/tiling-shell/
-      - 5470      # Weather O’Clock:                                https://extensions.gnome.org/extension/5470/weather-oclock/
-      - 5506    # User Avatar In Quick Settings:                    https://extensions.gnome.org/extension/5506/user-avatar-in-quick-settings/
-      # GSConnect, i.e. 1319           				    https://extensions.gnome.org/extension/1319/gsconnect/
-      # Caffeine, i.e. 517 (installed as rpm, see above)            https://extensions.gnome.org/extension/517/caffeine/
+      - 5470      # Weather O'Clock: https://extensions.gnome.org/extension/5470/weather-oclock/
 
 ##################
 ##  PAM / Auth  ##
 ##################
 
-# fprintd is not part of this image – without it, PAM will get noisy:
+# fprintd is not part of this image – without this, PAM will get noisy:
   - type: script
     snippets:
       - authselect disable-feature with-fingerprint
 
 ################
-##  Sudon’t   ##
+##  Sudon't   ##
 ################
 
   - type: script
@@ -337,18 +320,23 @@ modules:
     #  enabled:
         # - some_service.service
 
-########################
-##  Kernel arguments  ##
-########################
+############################
+##  Set Kernel arguments  ##
+############################
 
-  # Set kernel arguments for disabling plymouth (since it is not part of Unwritten):
+  # Disable Plymouth (it is not part of Unwritten):
   - type: kargs
     kargs:
       - plymouth.enable=0
       - rd.plymouth=0
       - rd.info=1
-
-  # Set kernel arguments for Varmilo keyboard, so you don’t have to press the `FN` key to get `F1`–`F12` working:
+  
+  # Turn on Full Preemption:
+      - preempt=full
+  # Check this with 'grep -o 'preempt=full' /proc/cmdline' → should say: 'preempt=full'; 
+  # and with 'run0 cat /sys/kernel/debug/sched/preempt' → '(full) lazy'.
+  
+  # For my Varmilo keyboard, so I don't have to press the 'FN' key to get 'F1'–'F12' working:
   - type: kargs
     kargs:
       - hid_apple.fnmode=2
@@ -359,22 +347,21 @@ modules:
 
   - type: initramfs
 
-
 ######################
 ##  Make it clean.  ##
 ######################
+
   - type: script
     snippets:
       - rm -rf /usr/share/doc
       - rm -rf /usr/src
-      - dnf5 versionlock clear
       - dnf5 clean all
       - rm -f /etc/yum.repos.d/rpmfusion-nonfree-nvidia-driver.repo
       - rm -f /etc/yum.repos.d/rpmfusion-nonfree-steam.repo
 
-#####################
-##  Image signing  ##
-#####################
+######################
+##  Sign the image  ##
+######################
 
  # Set up policy & signing files for your signed image:
   - type: signing 
@@ -384,6 +371,66 @@ modules:
 ##  My removal list for future reference ##
 ###########################################
 ###########################################
+
+###########################################
+##  Version lock  (for third party repos ##
+###########################################
+  # Uncomment this section IF you add third party repos, such as rpmfusion; negativo 17 is set to priority 90 (sufficient)
+  #- type: script
+  #  snippets:
+  #    - dnf5 versionlock add libheif libva mesa-dri-drivers mesa-filesystem mesa-libEGL mesa-libGL mesa-libgbm mesa-va-drivers mesa-vulkan-drivers ocl-icd
+
+#############
+## Utility ##
+#############
+# - clamav                           # Open-source command-line antivirus engine
+# - clamav-freshclam                 # Auto-updater for ClamAV virus signature databases
+
+#########################
+## Printers & Scanners ##
+#########################
+
+# - libsane-hpaio                    # HP network scanner support (part of HPLIP)
+
+###########
+## Fonts ##
+###########
+# - google-noto-sans-balinese-fonts  # Font support for Balinese script
+# - google-noto-sans-javanese-fonts  # Font support for Javanese script
+# - google-noto-sans-sundanese-fonts # Font support for Sundanese script
+# - jetbrains-mono-fonts-all         # Excellent monospace font designed for developers
+# - ibm-plex-sans-fonts              # IBM's open-source corporate typeface
+
+######################
+## GNOME extensions ##
+######################
+
+# RPM:
+# - gnome-shell-extension-just-perfection
+
+# type: gnome-extensions:
+# - 7065    # Tiling Shell: https://extensions.gnome.org/extension/7065/tiling-shell/
+# - 5506    # User Avatar In Quick Settings: https://extensions.gnome.org/extension/5506/user-avatar-in-quick-settings/
+# GSConnect, i.e. 1319 (https://extensions.gnome.org/extension/1319/gsconnect/)
+
+#########################
+##  For using the COPR ##
+#########################
+
+# For using the COPR, get dnf5-plugins and use the version lock:
+
+# 1)
+# modules:
+#  - type: dnf
+#    install:
+#      packages:
+#        - fedora-logos   # Provides base Fedora visual assets
+#        - dnf5-plugins   # Essential plugins for DNF5 (needed for COPR) 
+
+# 2)
+# Add '- dnf5 versionlock clear' to 'Make it clean'.
+
+#########################
 
 # Emulation:
   # - systemd-container                # Tools for managing local containers; machinectl/nspawn/vmspawn; Recommends qemu-kvm-core → 64M emulator. No VMs, no nspawn for this image.
@@ -429,7 +476,7 @@ modules:
 # Android mounting. It's done via gvfs-mtp by GNOME now.
   # - jmtpfs
 
-# mpv. There’s a Flatpak available.
+# mpv. There's a Flatpak available.
   # - mpv
   # - mpv-mpris
   # - libavcodec
@@ -557,7 +604,7 @@ modules:
   #      - noctalia-shell
   #      - quickshell
     
-  # Linux Mint's webapp-manager from Kyle Gospo’s (Bazzite) repo:
+  # Linux Mint's webapp-manager from Kyle Gospo's (Bazzite) repo:
   #- type: dnf
   #  repos:
   #    cleanup: true
@@ -567,9 +614,9 @@ modules:
   #    packages:
   #      - webapp-manager
   
-################
-##  DeaDBeeF  ##
-################
+################################
+##  DeaDBeeF from RPM Fusion  ##
+################################
 
   # DeaDBeeF (make sure these are `the last` rpm packages to be installed):
   #- type: dnf
