@@ -56,7 +56,7 @@ modules:
       packages:
         # - console-login-helper-messages
         - chrony                           # Replaced with systemd-timesyncd (see systemd section)
-        - sssd* 			   # Not needed if only local users are used
+        - sssd*                            # Not needed if only local users are used
         - qemu-user-static*                # Not needed unless cross-arch dev is required
         - toolbox                          # Replaced by distrobox (see below)
 
@@ -95,7 +95,7 @@ modules:
         - solaar-udev                      # Access rules for Solaar (Logitech receiver manager)
         - gnome-keyring                    # Secrets and passwords for GNOME apps
         - pipewire-pulseaudio              # PulseAudio compatibility (Firefox, Flatpaks)
-        - wireplumber			   # session manager for PipeWire
+        - wireplumber                      # session manager for PipeWire
         - xorg-x11-server-Xwayland	   # for X11 apps on Wayland
 
         ################################
@@ -121,7 +121,7 @@ modules:
         - micro                            # Modern and intuitive terminal-based text editor
         - openssl                          # Toolkit for TLS/SSL cryptographic protocols
         - pv                               # Pipe Viewer, monitors the progress of data in pipelines
-        - rsync				   # Copy files
+        - rsync                            # Copy files
         - symlinks                         # A tiny utility to find and fix broken symlinks
         - systemd-oomd-defaults            # Out-of-memory daemon default configuration
         - tealdeer                         # Fast Rust implementation of tldr (simplified man pages)
@@ -147,32 +147,32 @@ modules:
         ######################
         
         - libva-utils                      # Collection of testing utilities for VA-API
-        # - gstreamer1-plugin-libav          # ffmpeg-based decoders (H.264/HEVC via libavcodec-freeworld)
+        # - gstreamer1-plugin-libav        # ffmpeg-based decoders (H.264/HEVC via libavcodec-freeworld)
         - gstreamer1-plugins-good          # Core well-supported plugin set
-        # - gstreamer1-plugins-bad-free      # Parsers and demuxers incl. HEVC
+        # - gstreamer1-plugins-bad-free    # Parsers and demuxers incl. HEVC
 
         ########################
         ##  GNOME Components  ##
         ########################
         
-        - gdm                              # GNOME Display Manager (the login screen)
-        - glycin-thumbnailer               # Sandboxed image thumbnailer used by modern GNOME apps
-        - gnome-bluetooth                  # Bluetooth pairing and management tools for GNOME
-        - gnome-color-manager              # Display color profile manager for GNOME
-        - gnome-control-center             # GNOME's main unified settings interface
-        - gnome-disk-utility               # Disks application for formatting and mounting drives
-        - gnome-session-wayland-session    # Enables the Wayland session for GNOME
-        - gnome-settings-daemon            # Background daemon handling GTK and session settings
-        - gnome-shell                      # The core user interface of the GNOME desktop
-        - gnome-shell-extension-caffeine   # Extension to keep the screen awake
+        - gdm                                # GNOME Display Manager (the login screen)
+        - glycin-thumbnailer                 # Sandboxed image thumbnailer used by modern GNOME apps
+        - gnome-bluetooth                    # Bluetooth pairing and management tools for GNOME
+        - gnome-color-manager                # Display color profile manager for GNOME
+        - gnome-control-center               # GNOME's main unified settings interface
+        - gnome-disk-utility                 # Disks application for formatting and mounting drives
+        - gnome-session-wayland-session      # Enables the Wayland session for GNOME
+        - gnome-settings-daemon              # Background daemon handling GTK and session settings
+        - gnome-shell                        # The core user interface of the GNOME desktop
+        - gnome-shell-extension-caffeine     # Extension to keep the screen awake
         - gnome-shell-extension-appindicator # https://extensions.gnome.org/extension/615/appindicator-support/
-        - gvfs-fuse                        # FUSE support for the GNOME Virtual File System
-        - gvfs-mtp                         # Media Transfer Protocol support (mounts Android phones)
-        - nautilus                         # GNOME's default file manager (Files)
-        - orca                             # Screen reader for individuals who are visually impaired
-        - ptyxis                           # Container-oriented terminal emulator for GNOME
-        - xdg-desktop-portal-gnome         # GNOME backend for Flatpak file/screen-sharing portals
-        - xdg-user-dirs-gtk                # Manages localized user directories (Documents, Downloads)
+        - gvfs-fuse                          # FUSE support for the GNOME Virtual File System
+        - gvfs-mtp                           # Media Transfer Protocol support (mounts Android phones)
+        - nautilus                           # GNOME's default file manager (Files)
+        - orca                               # Screen reader for individuals who are visually impaired
+        - ptyxis                             # Container-oriented terminal emulator for GNOME
+        - xdg-desktop-portal-gnome           # GNOME backend for Flatpak file/screen-sharing portals
+        - xdg-user-dirs-gtk                  # Manages localized user directories (Documents, Downloads)
 
         ############################
         ##  Fonts, Themes & L10N  ##
@@ -339,15 +339,19 @@ modules:
   
   # For my Varmilo keyboard, so I don't have to press the 'FN' key to get 'F1'–'F12' working:
       - hid_apple.fnmode=2
-  # Transparent zstd:1 compression for the whole system-disk btrfs.
+      
+  # Compression; transparent zstd:1 compression for the whole system-disk btrfs.
   # Btrfs takes fs-wide options (compress, commit, ...) from the FIRST mount of a filesystem, which on
   # bootc is /sysroot from the initrd via rootflags= — so compress=zstd:1 on the /var and /var/home
   # fstab lines is ignored, and systemd-remount-fs (masked, and /var is not / under composefs) can't help.
   # subvol=root MUST stay in the value: the install-time rootflags=subvol=root is still on the cmdline,
   # and this form is correct whether the two get concatenated or the last one wins.
-  # Verify: findmnt -t btrfs -o TARGET,OPTIONS → /sysroot, /var and /var/home show compress=zstd:1.
+  # Verify: 'findmnt -t btrfs -o TARGET,OPTIONS' → /sysroot, /var and /var/home show compress=zstd:1.
   # Only data written after this is compressed; do not defragment to recompress while btrbk snapshots exist.
       - rootflags=subvol=root,compress=zstd:1
+  # See: https://discussion.fedoraproject.org/t/root-mount-options-are-ignored-in-fedora-atomic-desktops-42-and-later/148562 
+  # https://gitlab.com/fedora/ostree/sig/-/work_items/72 
+  # https://github.com/ublue-os/bazzite/issues/3602
 
 #################
 ##  Initramfs  ##
