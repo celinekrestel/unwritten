@@ -169,7 +169,6 @@ modules:
         - gvfs-fuse                          # FUSE support for the GNOME Virtual File System
         - gvfs-mtp                           # Media Transfer Protocol support (mounts Android phones)
         - nautilus                           # GNOME's default file manager (Files)
-        - orca                               # Screen reader for individuals who are visually impaired
         - ptyxis                             # Container-oriented terminal emulator for GNOME
         - xdg-desktop-portal-gnome           # GNOME backend for Flatpak file/screen-sharing portals
         - xdg-user-dirs-gtk                  # Manages localized user directories (Documents, Downloads)
@@ -580,7 +579,11 @@ modules:
 
 # For .justfile scripts:
   # - just
-  
+
+# Screen reader for individuals who are visually impaired:
+# - orca
+# Otherwise, install temporarily with 'bootc usr-overlay'                               
+
 # Terminal multiplexer:
   # - tmux
 
