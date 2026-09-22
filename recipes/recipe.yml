@@ -185,6 +185,13 @@ modules:
         - google-noto-sans-cjk-vf-fonts    # Font support for Chinese, Japanese, and Korean
         - ibus                             # Intelligent Input Bus, for multilingual keyboard input
 
+        ############
+        ##  Niri  ##
+        ############
+
+        - niri                             # 26.04, Fedora (decathorpe)
+        - noctalia       
+                
         #########################
         ##  User Applications  ##
         #########################
