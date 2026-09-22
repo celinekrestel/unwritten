@@ -15,16 +15,17 @@
 ## What I am waiting for ##
 ###########################
 
-# 1) Waiting for Firefox (Flatpak) to work well with KeePassXC. Then: Remove the RPM Fusion block, the two rm -f lines for the rpmfusion repo files at the end, adw-gtk3-theme, and probably libva-utils.
+# 1) I'm waiting for Proton VPN app (Flatpak) to provide the advanced kill switch.
+# Then: delete the repo file in files/early, and remove 'me.proton.vpn.split_tunneling.service' from the systemd list. And remove proton_vpn_app.sh from files/scripts
 
-# 2) Waiting for Proton VPN app (Flatpak) to provide the advanced kill switch. Then: delete the repo file in files/early, and remove 'me.proton.vpn.split_tunneling.service' from the systemd list. And remove proton_vpn_app.sh from files/scripts
+# 1) I'm waiting for keepassxc#1232. The KeePassXC browser integration for the Flatpak version of Firefox.
 
 ###########################################
 ##  Image metadata & base configuration  ##
 ###########################################
 
 name: unwritten
-description: Unwritten 44 
+description: Unwritten 44
 base-image: quay.io/fedora/fedora-bootc
 image-version: 44                          
 cosign-version: none      # Container signing via cosign
@@ -96,7 +97,7 @@ modules:
         - gnome-keyring                    # Secrets and passwords for GNOME apps
         - pipewire-pulseaudio              # PulseAudio compatibility (Firefox, Flatpaks)
         - wireplumber                      # session manager for PipeWire
-        - xorg-x11-server-Xwayland	   # for X11 apps on Wayland
+        - xorg-x11-server-Xwayland         # for X11 apps on Wayland
 
         ################################
         ##  System Tools & Utilities  ##
@@ -111,7 +112,6 @@ modules:
         - distrobox                        # Run any Linux distribution inside your terminal
         - firewalld                        # Dynamic firewall management daemon
         - flatpak                          # Linux application sandboxing and distribution framework
-        - flatpak-spawn                    # Run host commands from inside Flatpak sandboxes
         - fuse                             # Filesystem in Userspace (required for 'borg mount')
         - fuse-libs                        # Libraries for Filesystem in Userspace
         - fzf                              # Command-line fuzzy finder for fast terminal searches
@@ -146,9 +146,9 @@ modules:
         ##  Media & Codecs  ##
         ######################
         
-        - libva-utils                      # Collection of testing utilities for VA-API
+        # - libva-utils                      # Collection of testing utilities for VA-API
         # - gstreamer1-plugin-libav        # ffmpeg-based decoders (H.264/HEVC via libavcodec-freeworld)
-        - gstreamer1-plugins-good          # Core well-supported plugin set
+        # - gstreamer1-plugins-good          # Core well-supported plugin set
         # - gstreamer1-plugins-bad-free    # Parsers and demuxers incl. HEVC
 
         ########################
@@ -178,7 +178,6 @@ modules:
         ##  Fonts, Themes & L10N  ##
         ############################
         
-        - adw-gtk3-theme                   # Libadwaita styling for legacy GTK3 applications; should leave with Firefox as soon as Firefox Flatpak is ready for KeePassXC integration
         - fira-code-fonts                  # Monospace font with programming ligatures
         - glibc-langpack-de                # German language pack for GNU C Library
         - glibc-langpack-en                # English language pack for GNU C Library
@@ -190,7 +189,7 @@ modules:
         ##  User Applications  ##
         #########################
         
-        - firefox                          # The Mozilla Firefox web browser
+	# None.
 
 ##################
 ##  Wallpapers  ##
@@ -208,33 +207,6 @@ modules:
     scripts:
       - proton_vpn_app.sh 	
  # To test the advanced kill switch, do this → reboot, TTY, curl before login  (curl -m 5 -sI https://example.com >/dev/null && echo "LEAK: traffic passes" || echo "blocked")
-
-###########################################################################################
-##  Media codecs (RPM Fusion) — REVISIT when the native-messaging portal lands upstream. ##
-###########################################################################################
-
-# This section goes down as as soon I switch to Firefox (Flatpak).
-
-# Deliberately placed AFTER the main package block: the -freeworld packages
-# replace their Fedora counterparts, so those have to be installed first.
-
-# Why I include a codec stack on the host at all:
-
-# Firefox (native rpm) uses host Mesa for VA-API and libavcodec for decode.
-# Native Firefox is needed because KeePassXC integration needs to spawn a host process. 
-# The Flatpak workarounds require granting Firefox host-exec rights, which defeats the sandbox.
-# What's at stake is phishing protection: the extension matches the stored URL against the page.
-
-# Everything else (mpv, Steam, all other Flatpaks) gets hardware decode from the Freedesktop runtime's → extra branches, independent of this block.
-
-  - type: dnf
-    repos:
-      cleanup: true
-      nonfree: rpmfusion
-    install:
-      packages:
-        - mesa-va-drivers-freeworld  # VA-API H.264/HEVC; Fedora's mesa has codecs stripped
-        - libavcodec-freeworld       # H.264/HEVC decode for native Firefox
 
 ####################
 ##  DNF removals  ##
@@ -316,7 +288,7 @@ modules:
         - bootc-fetch-apply-updates.timer          # Stops automatic bootc fetches (manual control only)
         - bootc-fetch-apply-updates.service        # Stops automatic bootc updates
         - systemd-remount-fs.service               # Masks remount service (often unnecessary on OSTree)
-        - flatpak-add-fedora-repos.service   	   # No Fedora Flatpak repo, Flathub lives in files/system/etc/flatpak/remotes.d/flathub.flatpakrepo
+        - flatpak-add-fedora-repos.service         # No Fedora Flatpak repo, Flathub lives in files/system/etc/flatpak/remotes.d/flathub.flatpakrepo
     # user:
     #  enabled:
         # - some_service.service
@@ -384,9 +356,50 @@ modules:
 ###########################################
 ###########################################
 
-###########################################
-##  Version lock  (for third party repos ##
-###########################################
+########################
+## For Native Firefox ##
+########################
+# 1) → Media codecs (RPM Fusion) — REVISIT when the native-messaging portal lands upstream
+# 2) → For RPM Fusion
+# 3) Add package: 'adw-gtk3-theme'
+
+###########################################################################################
+##  Media codecs (RPM Fusion) — REVISIT when the native-messaging portal lands upstream. ##
+###########################################################################################
+# This section goes down as as soon I switch to Firefox (Flatpak).
+
+# Deliberately placed AFTER the main package block: the -freeworld packages
+# replace their Fedora counterparts, so those have to be installed first.
+
+# Why I include a codec stack on the host at all:
+
+# Firefox (native rpm) uses host Mesa for VA-API and libavcodec for decode.
+# Native Firefox is needed because KeePassXC integration needs to spawn a host process. 
+# The Flatpak workarounds require granting Firefox host-exec rights, which defeats the sandbox.
+# What's at stake is phishing protection: the extension matches the stored URL against the page.
+
+# Everything else (mpv, Steam, all other Flatpaks) gets hardware decode from the Freedesktop runtime's → extra branches, independent of this block.
+
+#  - type: dnf
+#    repos:
+#      cleanup: true
+#      nonfree: rpmfusion
+#    install:
+#      packages:
+#        - mesa-va-drivers-freeworld  # VA-API H.264/HEVC; Fedora's mesa has codecs stripped
+#        - libavcodec-freeworld       # H.264/HEVC decode for native Firefox
+
+####################
+## For RPM Fusion ##
+####################
+# If you ever use RPM Fusion again, add this to 'Make it clean':
+#      - rm -f /etc/yum.repos.d/rpmfusion-nonfree-nvidia-driver.repo
+#      - rm -f /etc/yum.repos.d/rpmfusion-nonfree-steam.repo
+
+
+############################################
+##  Version lock  (for third party repos) ##
+############################################
   # Uncomment this section IF you add third party repos, such as rpmfusion; negativo 17 is set to priority 90 (sufficient)
   #- type: script
   #  snippets:
@@ -401,7 +414,6 @@ modules:
 #########################
 ## Printers & Scanners ##
 #########################
-
 # - libsane-hpaio                    # HP network scanner support (part of HPLIP)
 
 ###########
@@ -416,7 +428,6 @@ modules:
 ######################
 ## GNOME extensions ##
 ######################
-
 # RPM:
 # - gnome-shell-extension-just-perfection
 
@@ -424,11 +435,11 @@ modules:
 # - 7065    # Tiling Shell: https://extensions.gnome.org/extension/7065/tiling-shell/
 # - 5506    # User Avatar In Quick Settings: https://extensions.gnome.org/extension/5506/user-avatar-in-quick-settings/
 # GSConnect, i.e. 1319 (https://extensions.gnome.org/extension/1319/gsconnect/)
+######################
 
 #########################
 ##  For using the COPR ##
 #########################
-
 # For using the COPR, get dnf5-plugins and use the version lock:
 
 # 1)
@@ -465,7 +476,7 @@ modules:
   # - iwlwifi-dvm-firmware   # for legacy Intel WLAN chips
   # - iwlwifi-mvm-firmware   # for modern Intel WLAN chips
   # - iwlwifi-mld-firmware   # for even more modern Intel WLAN chips
-  # - fdk-aac-free	     # PipeWire uses this for AAC over Bluetooth
+  # - fdk-aac-free           # PipeWire uses this for AAC over Bluetooth
 
 # Intel support:
   # - intel-vaapi-driver
@@ -475,7 +486,7 @@ modules:
   # - intel-audio-firmware
   # - libva-intel-media-driver
   # THIS PREVENTS OVERHEATING IN INTEL LAPTOPS:
-  # - thermald 
+  # - thermald
 
 # Legacy X11 forwarding tools:
   # - xhost
@@ -587,14 +598,13 @@ modules:
   # - akmods-keygen@akmods-keygen.service
   # - akmods-keygen.target
   
-####################
-##  niri section  ##
-####################
-
+####################################################
+##  niri – A scrollable-tiling Wayland compositor ##
+####################################################
   # Follow these instructions if you want to add niri:
-  # 1. Add this to the dnf ublue-os/packages list above: - mate-polkit
-  # 2. Put the entire niri section between 'Core Software, Utilities, and GNOME Base' and 'DNF removals'
-  # 3. Uncomment the following:
+  # 1. Add this to the dnf packages list above: - mate-polkit
+  # 2. Put this section between 'Core Software, Utilities, and GNOME Base' and 'DNF removals'.
+  # NOTE: ! Verify if you really need the COPR for these packages ! CHANCES ARE YOU DON'T!
   
   #- type: dnf
   #  repos:
@@ -615,17 +625,8 @@ modules:
   #    packages:
   #      - noctalia-shell
   #      - quickshell
-    
-  # Linux Mint's webapp-manager from Kyle Gospo's (Bazzite) repo:
-  #- type: dnf
-  #  repos:
-  #    cleanup: true
-  #    copr:
-  #      - kylegospo/webapp-manager
-  #  install:
-  #    packages:
-  #      - webapp-manager
-  
+####################################################
+
 ################################
 ##  DeaDBeeF from RPM Fusion  ##
 ################################
@@ -647,3 +648,5 @@ modules:
 # for /files/deadbeef.sh:
 # #!/bin/bash
 # sed -i 's/^Exec=deadbeef %F$/Exec=env GTK_THEME=Adwaita:dark deadbeef %F/' /usr/share/applications/deadbeef.desktop
+
+################################
