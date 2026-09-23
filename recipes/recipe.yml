@@ -196,7 +196,7 @@ modules:
         ##  User Applications  ##
         #########################
         
-        # None here.
+        - steam-devices                    # udev rules for input devices (Steam)
 
 ##################
 ##  Wallpapers  ##
