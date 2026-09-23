@@ -196,7 +196,7 @@ modules:
         ##  User Applications  ##
         #########################
         
-        - steam-devices                    # udev rules for input devices (Steam)
+        - kernel-modules-extra             # for input devices (controllers)
 
 ##################
 ##  Wallpapers  ##
@@ -347,8 +347,6 @@ modules:
       - rm -rf /usr/share/doc
       - rm -rf /usr/src
       - dnf5 clean all
-      - rm -f /etc/yum.repos.d/rpmfusion-nonfree-nvidia-driver.repo
-      - rm -f /etc/yum.repos.d/rpmfusion-nonfree-steam.repo
 
 ######################
 ##  Sign the image  ##
