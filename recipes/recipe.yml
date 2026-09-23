@@ -196,7 +196,17 @@ modules:
         ##  User Applications  ##
         #########################
         
-        - kernel-modules-extra             # for input devices (controllers)
+        # None.
+
+##########################
+##  Extra kernel modules ##
+##########################
+
+  - type: script
+    snippets:
+      # xpad (XInput controllers, e.g. 8BitDo Ultimate 2C via 2.4G dongle) lives in kernel-modules-extra.
+      # Pinned to the base image's kernel, otherwise dnf pulls in a second, newer kernel.
+      - 'dnf5 -y install kernel-modules-extra-$(rpm -q --qf "%{VERSION}-%{RELEASE}" kernel-core)'
 
 ##################
 ##  Wallpapers  ##
