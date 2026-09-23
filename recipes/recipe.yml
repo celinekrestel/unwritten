@@ -205,8 +205,12 @@ modules:
   - type: script
     snippets:
       # xpad (XInput controllers, e.g. 8BitDo Ultimate 2C via 2.4G dongle) lives in kernel-modules-extra.
+      # (Used to be included in the CachyOS kernel.)
       # Pinned to the base image's kernel, otherwise dnf pulls in a second, newer kernel.
-      - 'dnf5 -y install kernel-modules-extra-$(rpm -q --qf "%{VERSION}-%{RELEASE}" kernel-core)'
+      # updates-archive is needed when the base image kernel lags behind the updates repo.
+      - 'dnf5 -y install fedora-repos-archive'
+      - 'dnf5 -y install --enable-repo=updates-archive kernel-modules-extra-$(rpm -q --qf "%{VERSION}-%{RELEASE}" kernel-core)'
+      - 'dnf5 -y remove fedora-repos-archive'
 
 ##################
 ##  Wallpapers  ##
