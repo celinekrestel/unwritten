@@ -332,7 +332,7 @@ modules:
         #############################
         # Plymouth, kernel argument #
         #############################
-	
+
         # Disable Plymouth (it is not part of Unwritten):
 
   - type: kargs
