@@ -15,10 +15,10 @@
 ## What I am waiting for ##
 ###########################
 
-# 1) I'm waiting for Proton VPN app (Flatpak) to provide the advanced kill switch.
-# Then: delete the repo file in files/early, and remove 'me.proton.vpn.split_tunneling.service' from the systemd list. And remove proton_vpn_app.sh from files/scripts
+# 1) I'm waiting for the Proton VPN app (from Flathub) to provide the advanced kill switch feature.
+# When this happens: in this recipe, delete the section 'Proton VPN app' and remove 'me.proton.vpn.split_tunneling.service' from the systemd list. In 'files/early', delete the repo file. In files/scripts, delete 'proton_vpn_app.sh'.
 
-# 1) I'm waiting for keepassxc#1232. The KeePassXC browser integration for the Flatpak version of Firefox.
+# 1) I'm waiting for keepassxc#1232: the KeePassXC browser integration for the Flatpak version of Firefox. However, as of 2026-09-26, I don't see that Firefox (Flatpak) and KeePassXC (Flatpak) will officially with together via browser integration in the foreseeable future, and I won't use any workarounds suggested by online tutorials/guides.
 
 ###########################################
 ##  Image metadata & base configuration  ##
@@ -45,7 +45,7 @@ modules:
 
   - type: files
     files:
-      - source: system    # Copies local ./system directory files over to /
+      - source: system   # Copies local ./system directory files over to /
         destination: /
 
 ########################################################
@@ -82,8 +82,8 @@ modules:
         - alsa-firmware                    # Firmware for Advanced Linux Sound Architecture
         - alsa-sof-firmware                # Sound Open Firmware. Crucial for modern Intel/AMD audio DSPs
         - evtest                           # Input device event monitor and query tool
-        - hplip                            # HP Linux Imaging and Printing suite. Needed for the LaserJet 4000TN – hpcups renders on the PC and sends PCL.
-                                           # The printer's 1997 PostScript interpreter fails on PDFs with images no matter the converter (pdftops, gs, pdftocairo all tested 2026-09-14).
+        - hplip                            # HP Linux Imaging and Printing suite. Needed for the LaserJet 4000TN – hpcups renders on the PC and sends PCL;
+                                           # the printer's 1997 PostScript interpreter fails on PDFs with images no matter the converter (pdftops, gs, pdftocairo all tested 2026-09-14).
         - inxi                             # Feature-rich command line system information script
         - libratbag-ratbagd                # Daemon for configuring programmable gaming mice
         - lshw                             # Detailed hardware lister utility
@@ -96,7 +96,7 @@ modules:
         - solaar-udev                      # Access rules for Solaar (Logitech receiver manager)
         - gnome-keyring                    # Secrets and passwords for GNOME apps
         - pipewire-pulseaudio              # PulseAudio compatibility (Firefox, Flatpaks)
-        - wireplumber                      # session manager for PipeWire
+        - wireplumber                      # Session manager for PipeWire
         - xorg-x11-server-Xwayland         # for X11 apps on Wayland
 
         ################################
@@ -137,19 +137,19 @@ modules:
         ##  Networking Tools  ##
         ########################
         
-        - NetworkManager-config-connectivity-fedora # NetworkManager connectivity checks for Fedora
-        - NetworkManager-openvpn           # OpenVPN integration for NetworkManager
-        - NetworkManager-wifi              # Core WiFi support for NetworkManager
-        - wireguard-tools                  # Utilities for managing the WireGuard VPN protocol
+        - NetworkManager-config-connectivity-fedora  # NetworkManager connectivity checks for Fedora
+        - NetworkManager-openvpn                     # OpenVPN integration for NetworkManager
+        - NetworkManager-wifi                        # Core WiFi support for NetworkManager
+        - wireguard-tools                            # Utilities for managing the WireGuard VPN protocol
 
         ######################
         ##  Media & Codecs  ##
         ######################
         
-        - gstreamer1-plugin-openh264
-        # - libva-utils                      # Collection of testing utilities for VA-API
-        # - gstreamer1-plugin-libav        # ffmpeg-based decoders (H.264/HEVC via libavcodec-freeworld)
-        # - gstreamer1-plugins-good          # Core well-supported plugin set
+        - gstreamer1-plugin-openh264       # Without it, GNOME screencast will be save videos in .webm instead of .mp4
+        # - libva-utils                    # Collection of testing utilities for VA-API
+        # - gstreamer1-plugin-libav        # FFmpeg-based decoders (H.264/HEVC via libavcodec-freeworld)
+        # - gstreamer1-plugins-good        # Core well-supported plugin set
         # - gstreamer1-plugins-bad-free    # Parsers and demuxers incl. HEVC
 
         ########################
@@ -165,8 +165,8 @@ modules:
         - gnome-session-wayland-session      # Enables the Wayland session for GNOME
         - gnome-settings-daemon              # Background daemon handling GTK and session settings
         - gnome-shell                        # The core user interface of the GNOME desktop
-        - gnome-shell-extension-caffeine     # Extension to keep the screen awake
-        - gnome-shell-extension-appindicator # https://extensions.gnome.org/extension/615/appindicator-support/
+        - gnome-shell-extension-caffeine     # Keep the screen awake
+        - gnome-shell-extension-appindicator # Bring tray bar icons to GNOME
         - gvfs-fuse                          # FUSE support for the GNOME Virtual File System
         - gvfs-mtp                           # Media Transfer Protocol support (mounts Android phones)
         - nautilus                           # GNOME's default file manager (Files)
@@ -189,8 +189,8 @@ modules:
         ##  Niri  ##
         ############
 
-        - niri                             # 26.04, Fedora (decathorpe)
-        - noctalia       
+        - niri                             # 'A scrollable-tiling Wayland compositor' written in Rust
+        - noctalia                         # 'A family of native Wayland projects that feel like one desktop' written in C++
                 
         #########################
         ##  User Applications  ##
@@ -198,16 +198,16 @@ modules:
         
         # None.
 
-##########################
+###########################
 ##  Extra kernel modules ##
-##########################
+###########################
 
+# xpad (XInput controllers, e.g. 8BitDo Ultimate 2C via 2.4G dongle) lives in kernel-modules-extra.
+# Pinned to the base image's kernel, otherwise dnf pulls in a second, newer kernel.
+# updates-archive is needed when the base image kernel lags behind the updates repo.
+      
   - type: script
     snippets:
-      # xpad (XInput controllers, e.g. 8BitDo Ultimate 2C via 2.4G dongle) lives in kernel-modules-extra.
-      # (Used to be included in the CachyOS kernel.)
-      # Pinned to the base image's kernel, otherwise dnf pulls in a second, newer kernel.
-      # updates-archive is needed when the base image kernel lags behind the updates repo.
       - 'dnf5 -y install fedora-repos-archive'
       - 'dnf5 -y install --enable-repo=updates-archive kernel-modules-extra-$(rpm -q --qf "%{VERSION}-%{RELEASE}" kernel-core)'
       - 'dnf5 -y remove fedora-repos-archive'
@@ -224,10 +224,13 @@ modules:
 ##  Proton VPN app  ##
 ######################
 
+ # To test the advanced kill switch, do this → reboot, TTY, curl before login with this command:
+ # curl -m 5 -sI https://example.com >/dev/null && echo "LEAK: traffic passes" || echo "blocked")
+
   - type: script
     scripts:
-      - proton_vpn_app.sh 	
- # To test the advanced kill switch, do this → reboot, TTY, curl before login  (curl -m 5 -sI https://example.com >/dev/null && echo "LEAK: traffic passes" || echo "blocked")
+      - proton_vpn_app.sh
+
 
 ####################
 ##  DNF removals  ##
@@ -254,15 +257,19 @@ modules:
 ##  GNOME extensions  ##
 ########################
 
-  - type: gnome-extensions        
-    install:
-      - 5470      # Weather O'Clock: https://extensions.gnome.org/extension/5470/weather-oclock/
+# My general rule when it comes to GNOME extensions:
+# The fewer GNOME extensions you use, the more stable GNOME will become.
+
+  #- type: gnome-extensions        
+  #  install:
+  #    - 5470      # Weather O'Clock: https://extensions.gnome.org/extension/5470/weather-oclock/
 
 ##################
 ##  PAM / Auth  ##
 ##################
 
-# fprintd is not part of this image – without this, PAM will get noisy:
+# fprintd is not part of this image – without this, PAM will get noisy.
+
   - type: script
     snippets:
       - authselect disable-feature with-fingerprint
@@ -270,6 +277,9 @@ modules:
 ################
 ##  Sudon't   ##
 ################
+
+# I try to follow the Sudon't approach of VanillaOS; see:
+# https://vanillaos.org/nerd-info
 
   - type: script
     scripts:
@@ -293,7 +303,8 @@ modules:
 ##  Systemd services  ##
 ########################
 
-  # Enable, disable and mask systemd services:
+# Enable, disable and mask systemd services.
+
   - type: systemd
     system:
       enabled:
@@ -318,33 +329,56 @@ modules:
 ##  Set Kernel arguments  ##
 ############################
 
-  # Disable Plymouth (it is not part of Unwritten):
+        #############################
+        # Plymouth, kernel argument #
+        #############################
+	
+        # Disable Plymouth (it is not part of Unwritten):
+
   - type: kargs
     kargs:
       - plymouth.enable=0
       - rd.plymouth=0
       - rd.info=1
-  
-  # Turn on Full Preemption:
+
+        ####################################
+        # Full Preemption, kernel argument #
+        ####################################
+	
+        # Turn on Full Preemption:
+
       - preempt=full
-  # Check this with 'grep -o 'preempt=full' /proc/cmdline' → should say: 'preempt=full'; 
-  # and with 'run0 cat /sys/kernel/debug/sched/preempt' → '(full) lazy'.
-  
-  # For my Varmilo keyboard, so I don't have to press the 'FN' key to get 'F1'–'F12' working:
+      
+        # Check this with 'grep -o 'preempt=full' /proc/cmdline' → it should say: 'preempt=full'; 
+        # Check this also with 'run0 cat /sys/kernel/debug/sched/preempt' → it should say: '(full) lazy'.
+
+        #############################
+        # Keyboard, kernel argument #
+        #############################
+
+        # For my Varmilo keyboard, so I don't have to press the 'FN' key to get 'F1'–'F12' working.
+	
       - hid_apple.fnmode=2
       
-  # Compression; transparent zstd:1 compression for the whole system-disk btrfs.
-  # Btrfs takes fs-wide options (compress, commit, ...) from the FIRST mount of a filesystem, which on
-  # bootc is /sysroot from the initrd via rootflags= — so compress=zstd:1 on the /var and /var/home
-  # fstab lines is ignored, and systemd-remount-fs (masked, and /var is not / under composefs) can't help.
-  # subvol=root MUST stay in the value: the install-time rootflags=subvol=root is still on the cmdline,
-  # and this form is correct whether the two get concatenated or the last one wins.
-  # Verify: 'findmnt -t btrfs -o TARGET,OPTIONS' → /sysroot, /var and /var/home show compress=zstd:1.
-  # Only data written after this is compressed; do not defragment to recompress while btrbk snapshots exist.
+        ################################
+        # Compression, kernel argument #
+        ################################
+
+        # Transparent zstd:1 compression for the whole system-disk btrfs.
+
       - rootflags=subvol=root,compress=zstd:1
-  # See: https://discussion.fedoraproject.org/t/root-mount-options-are-ignored-in-fedora-atomic-desktops-42-and-later/148562 
-  # https://gitlab.com/fedora/ostree/sig/-/work_items/72 
-  # https://github.com/ublue-os/bazzite/issues/3602
+  
+        # Explanation:
+        # Btrfs takes fs-wide options (compress, commit, ...) from the FIRST mount of a filesystem, which on
+        # bootc is /sysroot from the initrd via rootflags= — so compress=zstd:1 on the /var and /var/home
+        # fstab lines is ignored, and systemd-remount-fs (masked, and /var is not / under composefs) can't help.
+        # subvol=root MUST stay in the value: the install-time rootflags=subvol=root is still on the cmdline,
+        # and this form is correct whether the two get concatenated or the last one wins.
+        # Verify: 'findmnt -t btrfs -o TARGET,OPTIONS' → /sysroot, /var and /var/home show compress=zstd:1.
+        # Only data written after this is compressed; do not defragment to recompress while btrbk snapshots exist.
+        # See: https://discussion.fedoraproject.org/t/root-mount-options-are-ignored-in-fedora-atomic-desktops-42-and-later/148562 
+        # See: https://gitlab.com/fedora/ostree/sig/-/work_items/72 
+        # See: https://github.com/ublue-os/bazzite/issues/3602
 
 #################
 ##  Initramfs  ##
@@ -367,6 +401,7 @@ modules:
 ######################
 
  # Set up policy & signing files for your signed image:
+ 
   - type: signing 
   
 ###########################################
@@ -378,13 +413,15 @@ modules:
 ########################
 ## For Native Firefox ##
 ########################
-# 1) → Media codecs (RPM Fusion) — REVISIT when the native-messaging portal lands upstream
-# 2) → For RPM Fusion
-# 3) Add package: 'adw-gtk3-theme'
+# 1) Add the section 'Media codecs (RPM Fusion) — REVISIT when the native-messaging portal lands upstream'
+# 2) Add the section 'For RPM Fusion'
+# 3) Add these packages: 'adw-gtk3-theme' adn 'firefox'
 
 ###########################################################################################
 ##  Media codecs (RPM Fusion) — REVISIT when the native-messaging portal lands upstream. ##
 ###########################################################################################
+# → Note that the comments in this sections are obsolete. I have switched to Firefox (Flatpak).
+
 # This section goes down as as soon I switch to Firefox (Flatpak).
 
 # Deliberately placed AFTER the main package block: the -freeworld packages
@@ -414,7 +451,6 @@ modules:
 # If you ever use RPM Fusion again, add this to 'Make it clean':
 #      - rm -f /etc/yum.repos.d/rpmfusion-nonfree-nvidia-driver.repo
 #      - rm -f /etc/yum.repos.d/rpmfusion-nonfree-steam.repo
-
 
 ############################################
 ##  Version lock  (for third party repos) ##
@@ -474,18 +510,77 @@ modules:
 
 #########################
 
-# Emulation:
-  # - systemd-container                # Tools for managing local containers; machinectl/nspawn/vmspawn; Recommends qemu-kvm-core → 64M emulator. No VMs, no nspawn for this image.
+# Support for ALL languages:
+  # - glibc-all-langpacks
 
-# ocl-icd is gone. → no host OpenCL. Everything GPU-computeish is a Flatpak anyway.
+# For .justfile scripts:
+  # - just
 
-# 2026-04-24 removals (listed for possible debugging):
-  # - fedora-repos-archive             # Access to archived, older Fedora repositories
-  # - mbuffer
-  # - alsa-tools-firmware              # Firmware loader tools for specific ALSA sound cards
-  # - gvfs-smb                         # Windows file sharing (SMB) network support for GNOME
+# Screen reader for individuals who are visually impaired:
+# - orca
+# For testing purposes, install orca with 'bootc usr-overlay'                               
 
-# WLAN and Bluetooth Firmware:
+# Terminal multiplexer:
+  # - tmux
+
+# Universal Blue Update (automatic updates):
+  # - uupd
+
+# Header files for devs:
+  # - libcap-ng-devel
+  # - procps-ng-devel
+
+# Homebrew support:
+  # - brew-setup.service
+
+# Custom kernel signing:
+  # - akmods-keygen@akmods-keygen.service
+  # - akmods-keygen.target
+  
+###############
+## mpv (RPM) ##
+###############
+# I install mpv from Flathub now.
+  # - mpv
+  # - mpv-mpris
+  # - libavcodec
+
+#############################
+##  DeaDBeeF (RPM Fusion)  ##
+#############################
+# 1) Install DeadBeeF
+# Add this and make sure these are *the last* RPM packages to be installed:
+  #- type: dnf
+  #  repos:
+  #    cleanup: true
+  #    nonfree: rpmfusion
+  #  install:
+  #    packages:
+  #      - deadbeef                         # Minimalist audio player for GNU/Linux
+  #      - deadbeef-plugins                 # Essential playback plugins for DeaDBeeF
+        
+# 2) Set DeaDBeeF to dark theme with this script:
+
+# For the recipe.yml:
+  #- type: script
+  #  scripts:
+  #    - deadbeef.sh
+  
+# Add '/files/deadbeef.sh' with this:
+# #!/bin/bash
+# sed -i 's/^Exec=deadbeef %F$/Exec=env GTK_THEME=Adwaita:dark deadbeef %F/' /usr/share/applications/deadbeef.desktop
+
+#########################
+#########################
+##                     ##
+## Drivers & Utilities ##
+##                     ##
+#########################
+#########################
+
+#################################
+## WLAN and Bluetooth Firmware ##
+#################################
   # - atheros-firmware
   # - realtek-firmware
   # - tiwilink-firmware      # for Texas Instruments WiFi/Bluetooth adapters
@@ -497,14 +592,28 @@ modules:
   # - iwlwifi-mld-firmware   # for even more modern Intel WLAN chips
   # - fdk-aac-free           # PipeWire uses this for AAC over Bluetooth
 
-# Intel support:
+###############
+## Emulation ##
+###############
+  # - systemd-container                # Tools for managing local containers; machinectl/nspawn/vmspawn; Recommends qemu-kvm-core → 64M emulator. No VMs, no nspawn for this image.
+
+# ocl-icd is gone. → no host OpenCL. Everything GPU-computeish is a Flatpak anyway.
+
+# 2026-04-24 removals (listed for possible debugging):
+  # - mbuffer
+  # - alsa-tools-firmware              # Firmware loader tools for specific ALSA sound cards
+  # - gvfs-smb                         # Windows file sharing (SMB) network support for GNOME
+
+###################
+## Intel support ##
+###################
   # - intel-vaapi-driver
   # - intel-gmmlib
   # - intel-mediasdk
   # - intel-vpl-gpu-rt
   # - intel-audio-firmware
   # - libva-intel-media-driver
-  # THIS PREVENTS OVERHEATING IN INTEL LAPTOPS:
+# THIS PREVENTS OVERHEATING IN INTEL LAPTOPS:
   # - thermald
 
 # Legacy X11 forwarding tools:
@@ -517,13 +626,11 @@ modules:
 
 # Android mounting. It's done via gvfs-mtp by GNOME now.
   # - jmtpfs
-
-# mpv. There's a Flatpak available.
-  # - mpv
-  # - mpv-mpris
-  # - libavcodec
-
-# Webcam support. DroidCam works without this.
+  
+####################
+## Webcam support ##
+####################
+# Comment: DroidCam (Android) works without this.
   # - libcamera
   # - libcamera-gstreamer
   # - libcamera-ipa
@@ -538,14 +645,16 @@ modules:
   # - fprintd
   # - fprintd-pam
 
-# ffmpeg
+############
+## FFmpeg ##
+############
   # - ffmpeg
   # - ffmpeg-libs
   # - ffmpegthumbnailer
 
-# Legacy commands like `ipconfig` and `route`:
+# Legacy commands like 'ipconfig' and 'route':
   # - net-tools
-  # Use `ip addr` or `ip link` instead.
+# Comment: Just use 'ip addr' or 'ip link' instead.
 
 # iOS support (iPhone, iPod Touch, iPad and Apple TV, etc.):
   # - usbmuxd
@@ -585,91 +694,8 @@ modules:
   # - open-vm-tools
   # - open-vm-tools-desktop
 
-# Tools for creating GNOME documentation:
-  # - yelp-tools
-
 # For very old WLAN Cards:
   # - iwlegacy-firmware
 
 # Steering Wheel Manager (Oversteer) input:
   # - oversteer-udev
-
-# Support for ALL languages:
-  # - glibc-all-langpacks
-
-# For .justfile scripts:
-  # - just
-
-# Screen reader for individuals who are visually impaired:
-# - orca
-# Otherwise, install temporarily with 'bootc usr-overlay'                               
-
-# Terminal multiplexer:
-  # - tmux
-
-# Universal Blue Update (automatic updates):
-  # - uupd
-
-# Header files for devs:
-  # - libcap-ng-devel
-  # - procps-ng-devel
-
-# Homebrew support:
-  # - brew-setup.service
-
-# Custom kernel signing:
-  # - akmods-keygen@akmods-keygen.service
-  # - akmods-keygen.target
-  
-####################################################
-##  niri – A scrollable-tiling Wayland compositor ##
-####################################################
-  # Follow these instructions if you want to add niri:
-  # 1. Add this to the dnf packages list above: - mate-polkit
-  # 2. Put this section between 'Core Software, Utilities, and GNOME Base' and 'DNF removals'.
-  # NOTE: ! Verify if you really need the COPR for these packages ! CHANCES ARE YOU DON'T!
-  
-  #- type: dnf
-  #  repos:
-  #    cleanup: true
-  #    copr:
-  #      - ublue-os/packages
-  #  install:
-  #    packages:
-  #      - niri
-  #      - niri-settings
-        
-  #- type: dnf
-  #  repos:
-  #    cleanup: true
-  #    copr:
-  #      - zhangyi6324/noctalia-shell
-  #  install:
-  #    packages:
-  #      - noctalia-shell
-  #      - quickshell
-####################################################
-
-################################
-##  DeaDBeeF from RPM Fusion  ##
-################################
-
-  # DeaDBeeF (make sure these are `the last` rpm packages to be installed):
-  #- type: dnf
-  #  repos:
-  #    cleanup: true
-  #    nonfree: rpmfusion
-  #  install:
-  #    packages:
-  #      - deadbeef                         # Minimalist audio player for GNU/Linux
-  #      - deadbeef-plugins                 # Essential playback plugins for DeaDBeeF
-        
-  # Set DeaDBeeF to dark theme:
-  #- type: script
-  #  scripts:
-  #    - deadbeef.sh
-# for /files/deadbeef.sh:
-# #!/bin/bash
-# sed -i 's/^Exec=deadbeef %F$/Exec=env GTK_THEME=Adwaita:dark deadbeef %F/' /usr/share/applications/deadbeef.desktop
-
-################################
