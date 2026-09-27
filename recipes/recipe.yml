@@ -344,11 +344,11 @@ modules:
         ####################################
         # Full Preemption, kernel argument #
         ####################################
-	
+
         # Turn on Full Preemption:
 
       - preempt=full
-      
+
         # Check this with 'grep -o 'preempt=full' /proc/cmdline' → it should say: 'preempt=full'; 
         # Check this also with 'run0 cat /sys/kernel/debug/sched/preempt' → it should say: '(full) lazy'.
 
@@ -357,9 +357,9 @@ modules:
         #############################
 
         # For my Varmilo keyboard, so I don't have to press the 'FN' key to get 'F1'–'F12' working.
-	
+
       - hid_apple.fnmode=2
-      
+
         ################################
         # Compression, kernel argument #
         ################################
@@ -367,7 +367,7 @@ modules:
         # Transparent zstd:1 compression for the whole system-disk btrfs.
 
       - rootflags=subvol=root,compress=zstd:1
-  
+
         # Explanation:
         # Btrfs takes fs-wide options (compress, commit, ...) from the FIRST mount of a filesystem, which on
         # bootc is /sysroot from the initrd via rootflags= — so compress=zstd:1 on the /var and /var/home
@@ -401,9 +401,9 @@ modules:
 ######################
 
  # Set up policy & signing files for your signed image:
- 
+
   - type: signing 
-  
+
 ###########################################
 ###########################################
 ##  My removal list for future reference ##
