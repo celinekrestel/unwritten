@@ -156,23 +156,24 @@ modules:
         ##  GNOME Components  ##
         ########################
         
-        - gdm                                # GNOME Display Manager (the login screen)
-        - glycin-thumbnailer                 # Sandboxed image thumbnailer used by modern GNOME apps
-        - gnome-bluetooth                    # Bluetooth pairing and management tools for GNOME
-        - gnome-color-manager                # Display color profile manager for GNOME
-        - gnome-control-center               # GNOME's main unified settings interface
-        - gnome-disk-utility                 # Disks application for formatting and mounting drives
-        - gnome-session-wayland-session      # Enables the Wayland session for GNOME
-        - gnome-settings-daemon              # Background daemon handling GTK and session settings
-        - gnome-shell                        # The core user interface of the GNOME desktop
-        - gnome-shell-extension-caffeine     # Keep the screen awake
-        - gnome-shell-extension-appindicator # Bring tray bar icons to GNOME
-        - gvfs-fuse                          # FUSE support for the GNOME Virtual File System
-        - gvfs-mtp                           # Media Transfer Protocol support (mounts Android phones)
-        - nautilus                           # GNOME's default file manager (Files)
-        - ptyxis                             # Container-oriented terminal emulator for GNOME
-        - xdg-desktop-portal-gnome           # GNOME backend for Flatpak file/screen-sharing portals
-        - xdg-user-dirs-gtk                  # Manages localized user directories (Documents, Downloads)
+        - gdm                                   # GNOME Display Manager (the login screen)
+        - glycin-thumbnailer                    # Sandboxed image thumbnailer used by modern GNOME apps
+        - gnome-bluetooth                       # Bluetooth pairing and management tools for GNOME
+        - gnome-color-manager                   # Display color profile manager for GNOME
+        - gnome-control-center                  # GNOME's main unified settings interface
+        - gnome-disk-utility                    # Disks application for formatting and mounting drives
+        - gnome-session-wayland-session         # Enables the Wayland session for GNOME
+        - gnome-settings-daemon                 # Background daemon handling GTK and session settings
+        - gnome-shell                           # The core user interface of the GNOME desktop
+        - gnome-shell-extension-caffeine        # Keep the screen awake
+        - gnome-shell-extension-appindicator    # Bring tray bar icons to GNOME
+        - gnome-shell-extension-background-logo # Transparent Fedora background logo for your desktop
+        - gvfs-fuse                             # FUSE support for the GNOME Virtual File System
+        - gvfs-mtp                              # Media Transfer Protocol support (mounts Android phones)
+        - nautilus                              # GNOME's default file manager (Files)
+        - ptyxis                                # Container-oriented terminal emulator for GNOME
+        - xdg-desktop-portal-gnome              # GNOME backend for Flatpak file/screen-sharing portals
+        - xdg-user-dirs-gtk                     # Manages localized user directories (Documents, Downloads)
 
         ############################
         ##  Fonts, Themes & L10N  ##
@@ -225,7 +226,7 @@ modules:
 ######################
 
  # To test the advanced kill switch, do this → reboot, TTY, curl before login with this command:
- # curl -m 5 -sI https://example.com >/dev/null && echo "LEAK: traffic passes" || echo "blocked")
+ # curl -m 5 -sI https://example.com >/dev/null && echo "LEAK: traffic passes" || echo "blocked"
 
   - type: script
     scripts:
