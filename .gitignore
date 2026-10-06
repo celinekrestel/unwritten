@@ -1,3 +1,6 @@
 cosign.key
 cosign.private
 /Containerfile
+
+# Keep personal documents out of this public repo
+*.pdf
