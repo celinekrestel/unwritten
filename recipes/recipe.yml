@@ -415,7 +415,18 @@ modules:
 
  # Set up policy & signing files for your signed image:
 
-  - type: signing 
+  - type: signing
+
+######################
+##  Lint the image  ##
+######################
+
+# bootc's own checks for common image mistakes. Fatal problems fail the build; warnings are only printed.
+# Keep this as the last module.
+
+  - type: script
+    snippets:
+      - bootc container lint
 
 ###########################################
 ###########################################
