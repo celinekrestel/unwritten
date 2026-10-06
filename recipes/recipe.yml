@@ -212,6 +212,7 @@ modules:
         - libcamera-ipa                    # Only needed for MIPI cameras; USB webcams and DroidCam work without it
         - libsane-hpaio                    # HP scanner backend; the scanner is a Canon LiDE 200 (USB)
         - malcontent-control               # Parental controls
+        - mbuffer                          # Recommended by btrbk, but only used with 'stream_buffer' or 'rate_limit'; btrbk.conf uses neither
         - pipewire-plugin-libcamera        # Only needed for MIPI cameras; USB webcams and DroidCam work without it
         - rygel                            # DLNA media sharing; not used
         - swaylock                         # Screen locker recommended by niri; Noctalia replaces it
