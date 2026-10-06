@@ -1,4 +1,4 @@
-# Unwritten &nbsp; [![bluebuild build badge](https://github.com/namoria/unwritten/actions/workflows/build.yml/badge.svg)](https://github.com/namoria/unwritten/actions/workflows/build.yml)
+# Unwritten &nbsp; [![bluebuild build badge](https://github.com/celinekrestel/unwritten/actions/workflows/build.yml/badge.svg)](https://github.com/celinekrestel/unwritten/actions/workflows/build.yml)
 
 ## About
 
@@ -46,7 +46,7 @@ sudo ostree admin pin --unpin 0
 First, rebase to the unsigned image to receive the proper signing keys:
 
 ```shell
-sudo bootc switch ghcr.io/namoria/unwritten:latest
+sudo bootc switch ghcr.io/celinekrestel/unwritten:latest
 ```
 
 After rebooting, `sudo` will no longer be available. Use **`run0`** or **`run0 sh -c '$your_command$'`** going forward.
@@ -64,7 +64,7 @@ run0 sh -c 'bootc rollback'
 Once you are satisfied, rebase to the signed image to complete the installation:
 
 ```shell
-run0 sh -c 'bootc switch --enforce-container-sigpolicy ghcr.io/namoria/unwritten:latest'
+run0 sh -c 'bootc switch --enforce-container-sigpolicy ghcr.io/celinekrestel/unwritten:latest'
 ```
 
 ### Verification
@@ -72,7 +72,7 @@ run0 sh -c 'bootc switch --enforce-container-sigpolicy ghcr.io/namoria/unwritten
 Unwritten images are signed with [Sigstore](https://www.sigstore.dev/)'s [cosign](https://github.com/sigstore/cosign). To verify the signature, download the `cosign.pub` file from this repository and run:
 
 ```shell
-cosign verify --key cosign.pub ghcr.io/namoria/unwritten
+cosign verify --key cosign.pub ghcr.io/celinekrestel/unwritten
 ```
 
 ---
