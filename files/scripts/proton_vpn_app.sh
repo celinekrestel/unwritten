@@ -8,6 +8,7 @@ rm -f "./${rel}"
 
 # %post tries to enable the systemd unit, which fails in a container build.
 # The unit is enabled in the recipe's systemd module instead.
-dnf5 -y install --setopt=tsflags=noscripts proton-vpn-gnome-desktop
+# Weak dependencies are skipped: they are only bcc-tools, compiler-rt, libomp(-devel) and small Python extras (~45 MiB).
+dnf5 -y install --setopt=tsflags=noscripts --setopt=install_weak_deps=False proton-vpn-gnome-desktop
 
 rpm -q proton-vpn-gnome-desktop >/dev/null

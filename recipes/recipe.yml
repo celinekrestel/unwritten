@@ -191,8 +191,27 @@ modules:
         #########################
         ##  User Applications  ##
         #########################
-        
+
         # None.
+
+      ##################################
+      ##  Excluded weak dependencies  ##
+      ##################################
+
+      # dnf also installs packages that other packages merely recommend ("weak dependencies").
+      # These are kept out on purpose. If one of them ever becomes a hard dependency, the build fails and tells you.
+
+      exclude:
+        - alacritty                        # niri's default terminal; not used here
+        - gnome-remote-desktop             # Remote access to this machine; not wanted
+        - gnome-tour                       # GNOME welcome tour
+        - intel-mediasdk                   # Intel video acceleration; AMD machine
+        - intel-vpl-gpu-rt                 # Intel video acceleration; AMD machine
+        - libcamera-ipa                    # Only needed for MIPI cameras; USB webcams and DroidCam work without it
+        - libsane-hpaio                    # HP scanner backend; the scanner is a Canon LiDE 200 (USB)
+        - malcontent-control               # Parental controls
+        - pipewire-plugin-libcamera        # Only needed for MIPI cameras; USB webcams and DroidCam work without it
+        - usbmuxd                          # iOS device support
 
 ###########################
 ##  Extra kernel modules ##
@@ -237,10 +256,8 @@ modules:
       cleanup: true
     remove:
       packages:
-        - gnome-tour                       # Removes the initial GNOME welcome tour application
         - ibus-libpinyin                   # Removes default Chinese Pinyin input method
         - ibus-typing-booster              # Removes the typing autocomplete booster
-        - malcontent-control               # Removes parental control enforcement interfaces
         - yelp                             # Removes the default GNOME help browser
         - yelp-libs                        # Removes libraries associated with Yelp
         - yelp-xsl                         # Removes XSL stylesheets used by Yelp
