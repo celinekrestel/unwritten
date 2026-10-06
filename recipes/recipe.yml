@@ -16,9 +16,9 @@
 ###########################
 
 # 1) I'm waiting for the Proton VPN app (from Flathub) to provide the advanced kill switch feature.
-# When this happens: in this recipe, delete the section 'Proton VPN app' and remove 'me.proton.vpn.split_tunneling.service' from the systemd list. In 'files/early', delete the repo file. In files/scripts, delete 'proton_vpn_app.sh'.
+# When this happens: in this recipe, delete the section 'Proton VPN app' and remove 'me.proton.vpn.split_tunneling.service' from the systemd list. In 'files/system/etc/xdg/autostart', delete 'proton.vpn.app.gtk.desktop'. In 'files/scripts', delete 'proton_vpn_app.sh'.
 
-# 1) I'm waiting for keepassxc#1232: the KeePassXC browser integration for the Flatpak version of Firefox. However, as of 2026-09-26, I don't see that Firefox (Flatpak) and KeePassXC (Flatpak) will officially with together via browser integration in the foreseeable future, and I won't use any workarounds suggested by online tutorials/guides.
+# 2) I'm waiting for keepassxc#1232: the KeePassXC browser integration for the Flatpak version of Firefox. However, as of 2026-09-26, I don't see that Firefox (Flatpak) and KeePassXC (Flatpak) will officially work together via browser integration in the foreseeable future, and I won't use any workarounds suggested by online tutorials/guides.
 
 ###########################################
 ##  Image metadata & base configuration  ##
@@ -37,11 +37,6 @@ modules:
     install:
       packages:
         - fedora-logos   # Provides base Fedora visual assets
-
-  - type: files
-    files:
-      - source: early    # For repo files only, as they have to exist before the installation
-        destination: /
 
   - type: files
     files:
