@@ -203,6 +203,8 @@ modules:
 
       exclude:
         - alacritty                        # niri's default terminal; not used here
+        - evolution-ews-core               # Microsoft Exchange support; not used
+        - fuzzel                           # App launcher recommended by niri; Noctalia replaces it
         - gnome-remote-desktop             # Remote access to this machine; not wanted
         - gnome-tour                       # GNOME welcome tour
         - intel-mediasdk                   # Intel video acceleration; AMD machine
@@ -211,7 +213,10 @@ modules:
         - libsane-hpaio                    # HP scanner backend; the scanner is a Canon LiDE 200 (USB)
         - malcontent-control               # Parental controls
         - pipewire-plugin-libcamera        # Only needed for MIPI cameras; USB webcams and DroidCam work without it
+        - rygel                            # DLNA media sharing; not used
+        - swaylock                         # Screen locker recommended by niri; Noctalia replaces it
         - usbmuxd                          # iOS device support
+        - waybar                           # Status bar recommended by niri; Noctalia replaces it
 
 ############################
 ##  Extra kernel modules  ##
