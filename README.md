@@ -129,7 +129,7 @@ run0 groupadd -r gdm
 run0 systemctl restart gdm
 ```
 
-You may need to run the second command twice, or perform a full reboot
+You may need to run the second command twice, or perform a full reboot.
 
 ---
 

@@ -27,7 +27,7 @@
 name: unwritten
 description: Unwritten 44
 base-image: quay.io/fedora/fedora-bootc
-image-version: 44                          
+image-version: 44
 cosign-version: none      # Container signing via cosign
 nushell-version: none     # BlueBuild scripting during the build process
 blue-build-tag: none      # BlueBuild won't append its tags to this image
@@ -58,7 +58,7 @@ modules:
 
   - type: script
     snippets:
-      - rm -f /usr/bin/chsh /usr/bin/lchsh # Footgun. see https://github.com/ublue-os/main/issues/598
+      - rm -f /usr/bin/chsh /usr/bin/lchsh # Footgun. See https://github.com/ublue-os/main/issues/598
 
 ################################################
 ##  Core Software, Utilities, and GNOME Base  ##
@@ -69,11 +69,11 @@ modules:
       cleanup: true
     install:
       packages:
-      
+
         #################################
         ##  Hardware & System Sensors  ##
         #################################
-        
+
         - alsa-firmware                    # Firmware for Advanced Linux Sound Architecture
         - alsa-sof-firmware                # Sound Open Firmware. Crucial for modern Intel/AMD audio DSPs
         - evtest                           # Input device event monitor and query tool
@@ -92,12 +92,12 @@ modules:
         - gnome-keyring                    # Secrets and passwords for GNOME apps
         - pipewire-pulseaudio              # PulseAudio compatibility (Firefox, Flatpaks)
         - wireplumber                      # Session manager for PipeWire
-        - xorg-x11-server-Xwayland         # for X11 apps on Wayland
+        - xorg-x11-server-Xwayland         # For X11 apps on Wayland
 
         ################################
         ##  System Tools & Utilities  ##
         ################################
-        
+
         - atuin                            # Magical shell history synced across multiple devices
         - bc                               # Basic Calculator. CLI tool for mathematical processing
         - borgbackup                       # Deduplicating archiver with compression and encryption
@@ -131,7 +131,7 @@ modules:
         ########################
         ##  Networking Tools  ##
         ########################
-        
+
         - NetworkManager-config-connectivity-fedora  # NetworkManager connectivity checks for Fedora
         - NetworkManager-openvpn                     # OpenVPN integration for NetworkManager
         - NetworkManager-wifi                        # Core WiFi support for NetworkManager
@@ -140,8 +140,8 @@ modules:
         ######################
         ##  Media & Codecs  ##
         ######################
-        
-        - gstreamer1-plugin-openh264       # Without it, GNOME screencast will be save videos in .webm instead of .mp4
+
+        - gstreamer1-plugin-openh264       # Without it, GNOME screencasts are saved as .webm instead of .mp4
         # - libva-utils                    # Collection of testing utilities for VA-API
         # - gstreamer1-plugin-libav        # FFmpeg-based decoders (H.264/HEVC via libavcodec-freeworld)
         # - gstreamer1-plugins-good        # Core well-supported plugin set
@@ -150,7 +150,7 @@ modules:
         ########################
         ##  GNOME Components  ##
         ########################
-        
+
         - gdm                                   # GNOME Display Manager (the login screen)
         - glycin-thumbnailer                    # Sandboxed image thumbnailer used by modern GNOME apps
         - gnome-bluetooth                       # Bluetooth pairing and management tools for GNOME
@@ -173,7 +173,7 @@ modules:
         ############################
         ##  Fonts, Themes & L10N  ##
         ############################
-        
+
         - fira-code-fonts                  # Monospace font with programming ligatures
         - glibc-langpack-de                # German language pack for GNU C Library
         - glibc-langpack-en                # English language pack for GNU C Library
@@ -187,7 +187,7 @@ modules:
 
         - niri                             # 'A scrollable-tiling Wayland compositor' written in Rust
         - noctalia                         # 'A family of native Wayland projects that feel like one desktop' written in C++
-                
+
         #########################
         ##  User Applications  ##
         #########################
@@ -213,14 +213,14 @@ modules:
         - pipewire-plugin-libcamera        # Only needed for MIPI cameras; USB webcams and DroidCam work without it
         - usbmuxd                          # iOS device support
 
-###########################
-##  Extra kernel modules ##
-###########################
+############################
+##  Extra kernel modules  ##
+############################
 
 # xpad (XInput controllers, e.g. 8BitDo Ultimate 2C via 2.4G dongle) lives in kernel-modules-extra.
 # Pinned to the base image's kernel, otherwise dnf pulls in a second, newer kernel.
 # updates-archive is needed when the base image kernel lags behind the updates repo.
-      
+
   - type: script
     snippets:
       - 'dnf5 -y install fedora-repos-archive'
@@ -239,13 +239,12 @@ modules:
 ##  Proton VPN app  ##
 ######################
 
- # To test the advanced kill switch, do this → reboot, TTY, curl before login with this command:
- # curl -m 5 -sI https://example.com >/dev/null && echo "LEAK: traffic passes" || echo "blocked"
+# To test the advanced kill switch, do this → reboot, TTY, curl before login with this command:
+# curl -m 5 -sI https://example.com >/dev/null && echo "LEAK: traffic passes" || echo "blocked"
 
   - type: script
     scripts:
       - proton_vpn_app.sh
-
 
 ####################
 ##  DNF removals  ##
@@ -265,7 +264,7 @@ modules:
         - nfsv3-client-utils               # No NFS on this system
         - nfsv4-client-utils               # No NFS on this system
         - nfs-common-utils                 # SUID mount.nfs helper
-        
+
 ########################
 ##  GNOME extensions  ##
 ########################
@@ -273,7 +272,7 @@ modules:
 # My general rule when it comes to GNOME extensions:
 # The fewer GNOME extensions you use, the more stable GNOME will become.
 
-  #- type: gnome-extensions        
+  #- type: gnome-extensions
   #  install:
   #    - 5470      # Weather O'Clock: https://extensions.gnome.org/extension/5470/weather-oclock/
 
@@ -287,9 +286,9 @@ modules:
     snippets:
       - authselect disable-feature with-fingerprint
 
-################
-##  Sudon't   ##
-################
+###############
+##  Sudon't  ##
+###############
 
 # I try to follow the Sudon't approach of VanillaOS; see:
 # https://vanillaos.org/nerd-info
@@ -362,7 +361,7 @@ modules:
 
       - preempt=full
 
-        # Check this with 'grep -o 'preempt=full' /proc/cmdline' → it should say: 'preempt=full'; 
+        # Check this with 'grep -o 'preempt=full' /proc/cmdline' → it should say: 'preempt=full';
         # Check this also with 'run0 cat /sys/kernel/debug/sched/preempt' → it should say: '(full) lazy'.
 
         #############################
@@ -389,8 +388,8 @@ modules:
         # and this form is correct whether the two get concatenated or the last one wins.
         # Verify: 'findmnt -t btrfs -o TARGET,OPTIONS' → /sysroot, /var and /var/home show compress=zstd:1.
         # Only data written after this is compressed; do not defragment to recompress while btrbk snapshots exist.
-        # See: https://discussion.fedoraproject.org/t/root-mount-options-are-ignored-in-fedora-atomic-desktops-42-and-later/148562 
-        # See: https://gitlab.com/fedora/ostree/sig/-/work_items/72 
+        # See: https://discussion.fedoraproject.org/t/root-mount-options-are-ignored-in-fedora-atomic-desktops-42-and-later/148562
+        # See: https://gitlab.com/fedora/ostree/sig/-/work_items/72
         # See: https://github.com/ublue-os/bazzite/issues/3602
 
 #################
@@ -413,7 +412,7 @@ modules:
 ##  Sign the image  ##
 ######################
 
- # Set up policy & signing files for your signed image:
+# Set up policy & signing files for your signed image:
 
   - type: signing
 
@@ -439,14 +438,14 @@ modules:
 ########################
 # 1) Add the section 'Media codecs (RPM Fusion) — REVISIT when the native-messaging portal lands upstream'
 # 2) Add the section 'For RPM Fusion'
-# 3) Add these packages: 'adw-gtk3-theme' adn 'firefox'
+# 3) Add these packages: 'adw-gtk3-theme' and 'firefox'
 
 ###########################################################################################
 ##  Media codecs (RPM Fusion) — REVISIT when the native-messaging portal lands upstream. ##
 ###########################################################################################
-# → Note that the comments in this sections are obsolete. I have switched to Firefox (Flatpak).
+# → Note that the comments in this section are obsolete. I have switched to Firefox (Flatpak).
 
-# This section goes down as as soon I switch to Firefox (Flatpak).
+# This section goes down as soon as I switch to Firefox (Flatpak).
 
 # Deliberately placed AFTER the main package block: the -freeworld packages
 # replace their Fedora counterparts, so those have to be installed first.
@@ -454,7 +453,7 @@ modules:
 # Why I include a codec stack on the host at all:
 
 # Firefox (native rpm) uses host Mesa for VA-API and libavcodec for decode.
-# Native Firefox is needed because KeePassXC integration needs to spawn a host process. 
+# Native Firefox is needed because KeePassXC integration needs to spawn a host process.
 # The Flatpak workarounds require granting Firefox host-exec rights, which defeats the sandbox.
 # What's at stake is phishing protection: the extension matches the stored URL against the page.
 
@@ -477,7 +476,7 @@ modules:
 #      - rm -f /etc/yum.repos.d/rpmfusion-nonfree-steam.repo
 
 ############################################
-##  Version lock  (for third party repos) ##
+##  Version lock (for third-party repos)  ##
 ############################################
   # Uncomment this section IF you add third party repos, such as rpmfusion; negativo 17 is set to priority 90 (sufficient)
   #- type: script
@@ -516,9 +515,9 @@ modules:
 # GSConnect, i.e. 1319 (https://extensions.gnome.org/extension/1319/gsconnect/)
 ######################
 
-#########################
-##  For using the COPR ##
-#########################
+##########################
+##  For using the COPR  ##
+##########################
 # For using the COPR, get dnf5-plugins and use the version lock:
 
 # 1)
@@ -527,7 +526,7 @@ modules:
 #    install:
 #      packages:
 #        - fedora-logos   # Provides base Fedora visual assets
-#        - dnf5-plugins   # Essential plugins for DNF5 (needed for COPR) 
+#        - dnf5-plugins   # Essential plugins for DNF5 (needed for COPR)
 
 # 2)
 # Add '- dnf5 versionlock clear' to 'Make it clean'.
@@ -542,7 +541,7 @@ modules:
 
 # Screen reader for individuals who are visually impaired:
 # - orca
-# For testing purposes, install orca with 'bootc usr-overlay'                               
+# For testing purposes, install orca with 'bootc usr-overlay'
 
 # Terminal multiplexer:
   # - tmux
@@ -560,7 +559,7 @@ modules:
 # Custom kernel signing:
   # - akmods-keygen@akmods-keygen.service
   # - akmods-keygen.target
-  
+
 ###############
 ## mpv (RPM) ##
 ###############
@@ -572,7 +571,7 @@ modules:
 #############################
 ##  DeaDBeeF (RPM Fusion)  ##
 #############################
-# 1) Install DeadBeeF
+# 1) Install DeaDBeeF
 # Add this and make sure these are *the last* RPM packages to be installed:
   #- type: dnf
   #  repos:
@@ -582,14 +581,14 @@ modules:
   #    packages:
   #      - deadbeef                         # Minimalist audio player for GNU/Linux
   #      - deadbeef-plugins                 # Essential playback plugins for DeaDBeeF
-        
+
 # 2) Set DeaDBeeF to dark theme with this script:
 
 # For the recipe.yml:
   #- type: script
   #  scripts:
   #    - deadbeef.sh
-  
+
 # Add '/files/deadbeef.sh' with this:
 # #!/bin/bash
 # sed -i 's/^Exec=deadbeef %F$/Exec=env GTK_THEME=Adwaita:dark deadbeef %F/' /usr/share/applications/deadbeef.desktop
@@ -650,7 +649,7 @@ modules:
 
 # Android mounting. It's done via gvfs-mtp by GNOME now.
   # - jmtpfs
-  
+
 ####################
 ## Webcam support ##
 ####################
@@ -662,7 +661,7 @@ modules:
   # - pipewire-plugin-libcamera
   # - libcamera-v4l2
 
-# Picture Transfer Protocol (PTP) support. Needed for old digital cameras. 
+# Picture Transfer Protocol (PTP) support. Needed for old digital cameras.
   # - gvfs-gphoto2
 
 # Fingerprint reader:
@@ -684,7 +683,7 @@ modules:
   # - usbmuxd
   # - libimobiledevice-utils
 
-# Multi-factor authentification (YubiKey, etc.):
+# Multi-factor authentication (YubiKey, etc.):
   # - pam-u2f
   # - pam_yubico
   # - pamu2fcfg
