@@ -334,6 +334,7 @@ modules:
         - firewalld.service
       disabled:
         - rpm-ostree-countme.timer                 # Disables sending analytics/counting data to Fedora
+        - sshd.service                             # No remote logins; fedora-bootc enables the SSH server by default
       masked:
         - bootc-fetch-apply-updates.timer          # Stops automatic bootc fetches (manual control only)
         - bootc-fetch-apply-updates.service        # Stops automatic bootc updates
