@@ -12,3 +12,8 @@ rm -f "./${rel}"
 dnf5 -y install --setopt=tsflags=noscripts --setopt=install_weak_deps=False proton-vpn-gnome-desktop
 
 rpm -q proton-vpn-gnome-desktop >/dev/null
+
+# noscripts also skips the icon cache update that normally runs when a package adds an icon.
+# Without it, GNOME cannot find Proton's icon (proton-vpn-logo in the hicolor theme): all files
+# in the image share one timestamp, so the outdated cache still looks valid. Rebuild it here.
+gtk-update-icon-cache --force /usr/share/icons/hicolor
