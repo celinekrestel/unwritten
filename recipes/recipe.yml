@@ -82,6 +82,7 @@ modules:
         - inxi                             # Feature-rich command line system information script
         - libratbag-ratbagd                # Daemon for configuring programmable gaming mice
         - lshw                             # Detailed hardware lister utility
+        - mt7xxx-firmware                  # Wi-Fi and Bluetooth firmware for the laptop's MediaTek MT7921 (was only a weak dependency)
         - nvme-cli                         # Command-line tool for managing NVMe SSDs
         - nvtop                            # Task monitor specifically for GPUs (AMD, Intel, NVIDIA)
         - openrgb-udev-rules               # Hardware access rules for OpenRGB lighting control
@@ -614,7 +615,6 @@ modules:
   # - atheros-firmware
   # - realtek-firmware
   # - tiwilink-firmware      # for Texas Instruments WiFi/Bluetooth adapters
-  # - mt7xxx-firmware        # for Mediatek 7600/7900 series WiFi/Bluetooth adapters
   # - nxpwireless-firmware   # for NXP WiFi/Bluetooth/UWB adapters
   # - brcmfmac-firmware      # for Broadcom
   # - iwlwifi-dvm-firmware   # for legacy Intel WLAN chips
