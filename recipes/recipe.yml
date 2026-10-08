@@ -189,6 +189,13 @@ modules:
         - niri                             # 'A scrollable-tiling Wayland compositor' written in Rust
         - noctalia                         # 'A family of native Wayland projects that feel like one desktop' written in C++
 
+        ####################
+        ##  For DeaDBeeF  ##
+        ####################
+
+        - gtk3			# DeaDBeeF is built on the GTK3 toolkit
+        - libdbusmenu		# For DeaDBeeF's tray-icon plugin
+
         #########################
         ##  User Applications  ##
         #########################
