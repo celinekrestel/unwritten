@@ -2,7 +2,7 @@
 
 ## About
 
-Unwritten is a custom [bootc](https://containers.github.io/bootc/) image based on **fedora-bootc**, tailored to my AMD CPU/GPU desktop. It ships with the GNOME desktop.
+Unwritten is a custom [bootc](https://containers.github.io/bootc/) image based on **fedora-bootc**, tailored to my AMD CPU/GPU desktop and my Lenovo IdeaPad 5 Pro 14ACN6 laptop. Both use the same image. It ships with the GNOME desktop.
 
 > [!IMPORTANT]
 > Unwritten uses **`run0`** instead of `sudo`. Because of a Fedora SELinux bug ([Fedora bug 2359828](https://bugzilla.redhat.com/show_bug.cgi?id=2359828)), `run0` cannot start programs that have their own SELinux domain, such as `bootc`, `dnf`, `rpm`, `journalctl`, `smartctl` or `groupadd`: they fail silently with exit code 203. Unwritten ships a small `run0` shell function (`/etc/profile.d/run0-selinux.sh`) that starts commands through `sh`, so **`run0 <command>`** just works. If you pass options to `run0` (for example `-u`), the function steps aside; use `run0 [options] sh -c 'exec "$@"' sh <command>` in that case. Note that `sudo` remains available inside a distrobox environment.
@@ -109,6 +109,35 @@ Then add the following to `~/.zshrc`:
 export PATH="$HOME/.local/bin:$PATH"
 eval "$(starship init zsh)"
 ```
+
+---
+
+## Notes
+
+### Btrfs layout
+
+Unwritten sets the kernel argument `rootflags=subvol=root,compress=zstd:1`. It expects Fedora's default btrfs layout with the subvolume `root`, so install Silverblue with the default partitioning (encryption is fine).
+
+### Laptop: Lenovo IdeaPad 5 Pro 14ACN6
+
+- **Graphics:** set *Graphics Device* to **UMA Graphics** in the UEFI/BIOS settings. The GeForce MX450 is then switched off by the firmware and does not appear in `lspci` at all; Unwritten ships no NVIDIA support. A BIOS update can reset this setting, so check it after every BIOS update.
+- **External screens:** according to `lspci`, HDMI and USB-C belong to the AMD GPU (the MX450 is listed as a display-less "3D controller"), so they should keep working in UMA mode. Not tested yet.
+- **Wi-Fi and Bluetooth:** MediaTek MT7921; its firmware (`mt7xxx-firmware`) is part of the image.
+
+### Backups (btrbk)
+
+The image ships the parts that are the same on every machine (in `/usr/lib/systemd/system/`):
+
+| File | Purpose |
+| --- | --- |
+| `btrbk.timer.d/50-hourly.conf` | Run btrbk every hour instead of once a day. |
+| `btrbk.service.d/40-require-config.conf` | Skip quietly on machines without `/etc/btrbk/btrbk.conf`. |
+| `btrbk.service.d/60-low-priority.conf` | Lowest CPU and I/O priority, `btrbk run --verbose`. |
+
+Each machine keeps its own parts in `/etc` (backed up in my dotfiles repo):
+
+- `/etc/btrbk/btrbk.conf`
+- `/etc/systemd/system/btrbk.service.d/50-wait-for-mounts.conf` with `RequiresMountsFor=` listing the `volume` and `target` paths from `btrbk.conf`, so btrbk waits until those disks are unlocked and mounted.
 
 ---
 
