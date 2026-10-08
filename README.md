@@ -5,7 +5,7 @@
 Unwritten is a custom [bootc](https://containers.github.io/bootc/) image based on **fedora-bootc**, tailored to my AMD CPU/GPU desktop. It ships with the GNOME desktop.
 
 > [!IMPORTANT]
-> Unwritten uses **`run0`** instead of `sudo`. For certain commands, you will need to wrap them as **`run0 sh -c '$your_command$'`** — this is an SELinux constraint that may be resolved in a future release. You can also set SELinux to permissive mode (`setenforce 0`), though this is not recommended. Note that `sudo` remains available inside a distrobox environment.
+> Unwritten uses **`run0`** instead of `sudo`. Because of a Fedora SELinux bug ([Fedora bug 2359828](https://bugzilla.redhat.com/show_bug.cgi?id=2359828)), `run0` cannot start programs that have their own SELinux domain, such as `bootc`, `dnf`, `rpm`, `journalctl`, `smartctl` or `groupadd`: they fail silently with exit code 203. Unwritten ships a small `run0` shell function (`/etc/profile.d/run0-selinux.sh`) that starts commands through `sh`, so **`run0 <command>`** just works. If you pass options to `run0` (for example `-u`), the function steps aside; use `run0 [options] sh -c 'exec "$@"' sh <command>` in that case. Note that `sudo` remains available inside a distrobox environment.
 
 ---
 
@@ -49,13 +49,13 @@ First, rebase to the unsigned image to receive the proper signing keys:
 sudo bootc switch ghcr.io/celinekrestel/unwritten:latest
 ```
 
-After rebooting, `sudo` will no longer be available. Use **`run0`** or **`run0 sh -c '$your_command$'`** going forward.
+After rebooting, `sudo` will no longer be available. Use **`run0`** going forward.
 
 If you change your mind, you can roll back to your previous deployment:
 
 ```shell
 # Only use this if you wish to revert:
-run0 sh -c 'bootc rollback'
+run0 bootc rollback
 ```
 
 > [!NOTE]
@@ -64,7 +64,7 @@ run0 sh -c 'bootc rollback'
 Once you are satisfied, rebase to the signed image to complete the installation:
 
 ```shell
-run0 sh -c 'bootc switch --enforce-container-sigpolicy ghcr.io/celinekrestel/unwritten:latest'
+run0 bootc switch --enforce-container-sigpolicy ghcr.io/celinekrestel/unwritten:latest
 ```
 
 ### Verification
