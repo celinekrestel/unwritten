@@ -112,6 +112,47 @@ eval "$(starship init zsh)"
 
 ---
 
+### Switch Flatpaks to Flathub
+
+See what came from Fedora's remote:
+
+```shell
+flatpak list --app --columns=application,name,origin | grep -w fedora
+```
+
+Remove the apps you don't want (examples):
+
+```shell
+flatpak uninstall org.gnome.Maps org.gnome.Weather org.gnome.Contacts
+```
+
+Move the rest to Flathub (app data is kept):
+
+```shell
+for app in $(flatpak list --app --columns=application,origin | awk '$2 == "fedora" {print $1}'); do
+    if flatpak remote-info flathub "$app" >/dev/null 2>&1; then
+        flatpak uninstall -y "$app" && flatpak install -y flathub "$app"
+    else
+        echo "Not on Flathub, left alone: $app"
+    fi
+done
+```
+
+Remove the Fedora runtimes and the remote(s):
+
+```shell
+flatpak uninstall --unused
+flatpak remotes
+flatpak remote-delete fedora
+flatpak remote-delete fedora-testing
+```
+
+Install a web browser:
+
+```shell
+flatpak install flathub org.mozilla.firefox
+```
+
 ## Notes
 
 ### Btrfs layout
