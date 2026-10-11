@@ -77,7 +77,9 @@ cosign verify --key cosign.pub ghcr.io/celinekrestel/unwritten
 
 ---
 
-## Post-installation
+## Post-Installation
+
+*After rebasing from Silverblue to Unwritten*
 
 ### The Terminal
 
@@ -185,6 +187,8 @@ Each machine keeps its own parts in `/etc` (backed up in my dotfiles repo):
 ## Troubleshooting
 
 ### GDM does not start at boot
+
+*Seen once when rebasing from Silverblue, not reproduced since.*
 
 If the system hangs at:
 
