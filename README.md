@@ -9,7 +9,7 @@
 
 **Unwritten is my personal, image-based Fedora desktop.** It starts from the minimal [fedora-bootc](https://containers.github.io/bootc/) base image, which has no desktop at all, and adds only what I actually use. GitHub builds it every day; my desktop and my laptop both run the same image, and every update can be rolled back.
 
-The name comes from the line above: nothing ends up in Unwritten unless I write it into its recipe.
+The name comes from that scene. When Lawrence returns, Sherif Ali concedes: 'Truly, for some men nothing is written unless they write it.' Unwritten works the same way.
 
 ### Principles
 
@@ -45,7 +45,7 @@ Unwritten is tailored to my hardware and habits. You are welcome to use it or bo
 Please install [Fedora Silverblue](https://fedoraproject.org/atomic-desktops/silverblue/) before proceeding:
 
 - Use the **default (automatic) partitioning**; encryption is fine. Unwritten expects Fedora's default btrfs layout, see [Btrfs layout](#btrfs-layout).
-- On the IdeaPad, set **UMA Graphics** in the UEFI/BIOS first, see [Laptop](#laptop-lenovo-ideapad-5-pro-14acn6).
+- On my IdeaPad, I set **UMA Graphics** in the UEFI/BIOS first, see [Laptop](#laptop-lenovo-ideapad-5-pro-14acn6).
 
 ### 1. Pin a safe deployment
 
