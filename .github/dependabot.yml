@@ -4,3 +4,7 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    # Propose a new release only once it is a week old (Dependabot's default: 3 days),
+    # so a compromised release has time to be noticed and pulled before it reaches this repo.
+    cooldown:
+      default-days: 7
