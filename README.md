@@ -16,7 +16,7 @@ The name comes from that scene. When Lawrence returns, Sherif Ali concedes: 'Tru
 - **Lean by design:** GNOME is assembled piece by piece instead of installed as a whole. Unwanted extras are kept out explicitly (see the exclude list in [`recipes/recipe.yml`](recipes/recipe.yml)).
 - **Apps come from Flathub:** the image carries the system, Flathub carries the apps.
 - **One image, two machines:** what is the same everywhere lives in the image; what is machine-specific lives in `/etc` and in my dotfiles.
-- **Careful defaults:** no `sudo` ([Sudon't](https://vanillaos.org/nerd-info)), SSH server off, no network discovery, core dumps disabled, firewall on, signed images.
+- **Careful defaults:** no `sudo` ([Sudon't](https://vanillaos.org/nerd-info)), SSH server off, no network discovery, core dumps disabled, a few kernel hardening settings, firewall on, signed images.
 - **Updates on my terms:** automatic updates are disabled; I update with `run0 bootc upgrade`.
 
 ### At a glance
@@ -220,6 +220,10 @@ run0 firewall-cmd --reload
 ```
 
 Names ending in `.local` also need `nss-mdns`, which the image excludes.
+
+### Kernel hardening
+
+`/usr/lib/sysctl.d/90-hardening.conf` sets four kernel options; the file explains each one. The one you may notice: attaching `gdb` or `strace` to a program that is already running needs `run0`.
 
 ### Backups (btrbk)
 

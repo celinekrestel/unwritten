@@ -383,6 +383,9 @@ modules:
 ##  Set Kernel arguments  ##
 ############################
 
+# Kernel settings that can change at runtime (sysctl) are in
+# files/system/usr/lib/sysctl.d/90-hardening.conf, each with an explanation.
+
         #############################
         # Plymouth, kernel argument #
         #############################
