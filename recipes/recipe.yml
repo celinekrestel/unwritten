@@ -114,6 +114,7 @@ modules:
         - git                              # Distributed version control system
         - gum                              # Tool for creating glamorous shell scripts
         - lynis                            # Security auditing tool for Unix-like systems
+        - mbuffer                          # progress display for btrbk --progress
         - micro                            # Modern and intuitive terminal-based text editor
         - openssl                          # Toolkit for TLS/SSL cryptographic protocols
         - pv                               # Pipe Viewer, monitors the progress of data in pipelines
@@ -227,7 +228,6 @@ modules:
         - libcamera-ipa                    # Only needed for MIPI cameras; USB webcams and DroidCam work without it
         - libsane-hpaio                    # HP scanner backend; the scanner is a Canon LiDE 200 (USB)
         - malcontent-control               # Parental controls
-        - mbuffer                          # Recommended by btrbk, but only used with 'stream_buffer' or 'rate_limit'; btrbk.conf uses neither
         - nss-mdns                         # Resolves .local names through avahi; avahi is off
         - pipewire-plugin-libcamera        # Only needed for MIPI cameras; USB webcams and DroidCam work without it
         - rygel                            # DLNA media sharing; not used
