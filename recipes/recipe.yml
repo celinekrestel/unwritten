@@ -344,11 +344,11 @@ modules:
 # Fedora's public firewall zone also lets in ssh (the SSH server is off) and mdns (avahi is off);
 # only DHCPv6 stays. A machine with its own /etc/firewalld/zones/public.xml keeps that file.
 # To bring discovery back on one machine, see the README: Notes, 'Network discovery'.
+# (firewall-offline-cmd calls it --remove-service-from-zone; its --remove-service is an old lokkit option.)
 
   - type: script
     snippets:
-      - firewall-offline-cmd --zone=public --remove-service=ssh
-      - firewall-offline-cmd --zone=public --remove-service=mdns
+      - firewall-offline-cmd --zone=public --remove-service-from-zone=ssh --remove-service-from-zone=mdns
 
 ########################
 ##  Systemd services  ##
