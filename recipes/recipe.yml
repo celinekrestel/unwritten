@@ -193,8 +193,10 @@ modules:
         ##  For DeaDBeeF  ##
         ####################
 
-        - gtk3                  # DeaDBeeF is built on the GTK3 toolkit
-        - libdbusmenu           # For DeaDBeeF's tray-icon plugin
+        # Not installed while I test DeaDBeeF as a Flatpak (io.sourceforge.deadbeef from FlatPark).
+        # The native version needs both again.
+        # - gtk3                # DeaDBeeF is built on the GTK3 toolkit
+        # - libdbusmenu         # For DeaDBeeF's tray-icon plugin
 
         #########################
         ##  User Applications  ##
