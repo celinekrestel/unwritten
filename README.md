@@ -16,7 +16,7 @@ The name comes from that scene. When Lawrence returns, Sherif Ali concedes: 'Tru
 - **Lean by design:** GNOME is assembled piece by piece instead of installed as a whole. Unwanted extras are kept out explicitly (see the exclude list in [`recipes/recipe.yml`](recipes/recipe.yml)).
 - **Apps come from Flathub:** the image carries the system, Flathub carries the apps.
 - **One image, two machines:** what is the same everywhere lives in the image; what is machine-specific lives in `/etc` and in my dotfiles.
-- **Careful defaults:** no `sudo` ([Sudon't](https://vanillaos.org/nerd-info)), SSH server off, core dumps disabled, firewall on, signed images.
+- **Careful defaults:** no `sudo` ([Sudon't](https://vanillaos.org/nerd-info)), SSH server off, no network discovery, core dumps disabled, firewall on, signed images.
 - **Updates on my terms:** automatic updates are disabled; I update with `run0 bootc upgrade`.
 
 ### At a glance
@@ -206,6 +206,20 @@ Unwritten sets the kernel argument `rootflags=subvol=root,compress=zstd:1`. It e
 - **Graphics:** set *Graphics Device* to **UMA Graphics** in the UEFI/BIOS settings. The GeForce MX450 is then switched off by the firmware and does not appear in `lspci` at all; Unwritten ships no NVIDIA support. A BIOS update can reset this setting, so check it after every BIOS update.
 - **External screens:** HDMI and USB-C are wired to the AMD GPU (`lspci` lists the MX450 as a display-less "3D controller"), so UMA mode does not affect them.
 - **Wi-Fi and Bluetooth:** MediaTek MT7921; its firmware (`mt7xxx-firmware`) is part of the image.
+
+### Network discovery
+
+Unwritten doesn't look for printers, scanners or other devices on the network, and it doesn't announce itself there: avahi (mDNS) and LLMNR are off, the firewall only lets in DHCPv6, and the printing and discovery extras are excluded from the image. Printers, scanners and phones on USB work as usual, and a network printer can usually still be added by its address.
+
+To turn discovery back on for one machine:
+
+```shell
+run0 systemctl enable --now avahi-daemon.socket avahi-daemon.service
+run0 firewall-cmd --permanent --add-service=mdns
+run0 firewall-cmd --reload
+```
+
+Names ending in `.local` also need `nss-mdns`, which the image excludes.
 
 ### Backups (btrbk)
 

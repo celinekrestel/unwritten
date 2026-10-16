@@ -213,16 +213,22 @@ modules:
 
       exclude:
         - alacritty                        # niri's default terminal; not used here
+        - avahi-tools                      # Network discovery tools; avahi is off
+        - braille-printer-app              # Braille embosser support
+        - cups-browsed                     # Finds and shares network printers; the printer is USB
+        - cups-filters-driverless          # Driverless printing for network printers; the printer is USB
         - evolution-ews-core               # Microsoft Exchange support; not used
         - fuzzel                           # App launcher recommended by niri; Noctalia replaces it
         - gnome-remote-desktop             # Remote access to this machine; not wanted
         - gnome-tour                       # GNOME welcome tour
         - intel-mediasdk                   # Intel video acceleration; AMD machine
         - intel-vpl-gpu-rt                 # Intel video acceleration; AMD machine
+        - ipp-usb                          # For modern driverless USB printers/scanners; neither device is one
         - libcamera-ipa                    # Only needed for MIPI cameras; USB webcams and DroidCam work without it
         - libsane-hpaio                    # HP scanner backend; the scanner is a Canon LiDE 200 (USB)
         - malcontent-control               # Parental controls
         - mbuffer                          # Recommended by btrbk, but only used with 'stream_buffer' or 'rate_limit'; btrbk.conf uses neither
+        - nss-mdns                         # Resolves .local names through avahi; avahi is off
         - pipewire-plugin-libcamera        # Only needed for MIPI cameras; USB webcams and DroidCam work without it
         - rygel                            # DLNA media sharing; not used
         - swaylock                         # Screen locker recommended by niri; Noctalia replaces it
@@ -327,6 +333,23 @@ modules:
       DEFAULT_HOSTNAME: unwritten
       VERSION_CODENAME: Next
 
+######################################
+##  Firewall and network discovery  ##
+######################################
+
+# This machine doesn't look for printers, scanners or other devices on the network, and it doesn't
+# announce itself there: avahi (mDNS) is disabled in the systemd module below, the printing and
+# discovery extras are excluded above, and LLMNR/mDNS are off in systemd-resolved
+# (files/system/usr/lib/systemd/resolved.conf.d/60-no-network-discovery.conf).
+# Fedora's public firewall zone also lets in ssh (the SSH server is off) and mdns (avahi is off);
+# only DHCPv6 stays. A machine with its own /etc/firewalld/zones/public.xml keeps that file.
+# To bring discovery back on one machine, see the README: Notes, 'Network discovery'.
+
+  - type: script
+    snippets:
+      - firewall-offline-cmd --zone=public --remove-service=ssh
+      - firewall-offline-cmd --zone=public --remove-service=mdns
+
 ########################
 ##  Systemd services  ##
 ########################
@@ -345,6 +368,8 @@ modules:
       disabled:
         - rpm-ostree-countme.timer                 # Disables sending analytics/counting data to Fedora
         - sshd.service                             # No remote logins; fedora-bootc enables the SSH server by default
+        - avahi-daemon.service                     # No network discovery; see 'Firewall and network discovery'
+        - avahi-daemon.socket                      # Would start avahi on demand
       masked:
         - bootc-fetch-apply-updates.timer          # Stops automatic bootc fetches (manual control only)
         - bootc-fetch-apply-updates.service        # Stops automatic bootc updates
