@@ -294,8 +294,9 @@ modules:
 # My general rule when it comes to GNOME extensions:
 # The fewer GNOME extensions you use, the more stable GNOME will become.
 
-  #- type: gnome-extensions
-  #  install:
+  - type: gnome-extensions
+    install:
+       - 3193      # Blur my Shell: https://extensions.gnome.org/extension/3193/blur-my-shell/
   #    - 5470      # Weather O'Clock: https://extensions.gnome.org/extension/5470/weather-oclock/
 
 ##################
