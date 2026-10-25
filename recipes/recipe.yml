@@ -164,6 +164,7 @@ modules:
         - gnome-shell                           # The core user interface of the GNOME desktop
         - gnome-shell-extension-caffeine        # Keep the screen awake
         - gnome-shell-extension-appindicator    # Bring tray bar icons to GNOME
+        - gnome-shell-extension-blur-my-shell   # Eye candy for GNOME
         - gnome-shell-extension-background-logo # Transparent Fedora background logo for your desktop
         - gvfs-fuse                             # FUSE support for the GNOME Virtual File System
         - gvfs-mtp                              # Media Transfer Protocol support (mounts Android phones)
@@ -291,12 +292,10 @@ modules:
 ##  GNOME extensions  ##
 ########################
 
-# My general rule when it comes to GNOME extensions:
-# The fewer GNOME extensions you use, the more stable GNOME will become.
+# For GNOME extensions that are not in the Fedora repository.
 
-  - type: gnome-extensions
-    install:
-       - 3193      # Blur my Shell: https://extensions.gnome.org/extension/3193/blur-my-shell/
+  #- type: gnome-extensions
+  #  install:
   #    - 5470      # Weather O'Clock: https://extensions.gnome.org/extension/5470/weather-oclock/
 
 ##################
