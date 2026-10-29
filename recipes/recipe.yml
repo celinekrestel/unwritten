@@ -186,8 +186,8 @@ modules:
         ##  Niri  ##
         ############
 
-        - niri                             # 'A scrollable-tiling Wayland compositor' written in Rust
-        - noctalia                         # 'A family of native Wayland projects that feel like one desktop' written in C++
+        #- niri                             # 'A scrollable-tiling Wayland compositor' written in Rust
+        #- noctalia                         # 'A family of native Wayland projects that feel like one desktop' written in C++
 
         ####################
         ##  For DeaDBeeF  ##
