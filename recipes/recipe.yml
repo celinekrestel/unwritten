@@ -85,11 +85,9 @@ modules:
         - mt7xxx-firmware                  # Wi-Fi and Bluetooth firmware for the laptop's MediaTek MT7921 (was only a weak dependency)
         - nvme-cli                         # Command-line tool for managing NVMe SSDs
         - nvtop                            # Task monitor specifically for GPUs (AMD, Intel, NVIDIA)
-        - openrgb-udev-rules               # Hardware access rules for OpenRGB lighting control
         - powerstat                        # Tool to measure laptop power consumption
         - sane-backends-drivers-scanners   # Universal scanner drivers for Linux
         - smartmontools                    # S.M.A.R.T. disk health monitoring utilities
-        - solaar-udev                      # Access rules for Solaar (Logitech receiver manager)
         - gnome-keyring                    # Secrets and passwords for GNOME apps
         - pipewire-pulseaudio              # PulseAudio compatibility (Firefox, Flatpaks)
         - wireplumber                      # Session manager for PipeWire
@@ -477,6 +475,10 @@ modules:
 ##  My removal list for future reference ##
 ###########################################
 ###########################################
+
+# Logitech Mouse
+#        - solaar-udev                      # Access rules for Solaar (Logitech receiver manager)
+#        - openrgb-udev-rules               # Hardware access rules for OpenRGB lighting control
 
 ########################
 ## For Native Firefox ##
