@@ -13,6 +13,11 @@ concurrency:
   # only run one build at a time
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
+env:
+  # The BlueBuild CLI does the build and handles the signing key, so its version is fixed here.
+  # Left out, the action would take whatever the moving tag v0.9 points to on that day.
+  # Dependabot can't see this line. To update: raise it on a branch, merge once Test Build is green.
+  BLUEBUILD_CLI_VERSION: v0.9.37
 jobs:
   # Builds from main are pushed and signed. The signing key lives in the 'signing' environment,
   # which only lets in runs from main (Settings → Environments). A workflow file that was changed
@@ -43,6 +48,8 @@ jobs:
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
+          cli_version: ${{ env.BLUEBUILD_CLI_VERSION }}
+          verify_install: true # stops the job unless the CLI was really built from blue-build/cli at that version
 
           # enabled by default, disable if your image is small and you want faster builds
           maximize_build_space: true
@@ -69,5 +76,7 @@ jobs:
           cosign_private_key: ""
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
+          cli_version: ${{ env.BLUEBUILD_CLI_VERSION }}
+          verify_install: true
           push: false
           maximize_build_space: true
