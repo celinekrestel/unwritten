@@ -219,6 +219,7 @@ modules:
         - fuzzel                           # App launcher recommended by niri; Noctalia replaces it
         - gnome-remote-desktop             # Remote access to this machine; not wanted
         - gnome-tour                       # GNOME welcome tour
+        - gst-thumbnailers                 # Thumbnailer for video and audio files in Nautilus (possible security implications)
         - intel-mediasdk                   # Intel video acceleration; AMD machine
         - intel-vpl-gpu-rt                 # Intel video acceleration; AMD machine
         - ipp-usb                          # For modern driverless USB printers/scanners; neither device is one
