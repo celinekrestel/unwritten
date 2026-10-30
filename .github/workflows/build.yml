@@ -14,8 +14,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 jobs:
+  # Builds from main are pushed and signed. The signing key lives in the 'signing' environment,
+  # which only lets in runs from main (Settings → Environments). A workflow file that was changed
+  # on another branch can't get past that.
   bluebuild:
     name: Build Custom Image
+    if: github.ref == 'refs/heads/main'
+    environment: signing
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -40,4 +45,29 @@ jobs:
           pr_event_number: ${{ github.event.number }}
 
           # enabled by default, disable if your image is small and you want faster builds
+          maximize_build_space: true
+
+  # Other branches and pull requests only check that the image still builds:
+  # no key, and nothing is pushed.
+  test-build:
+    name: Test Build
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false # stop GH from cancelling all matrix builds if one fails
+      matrix:
+        recipe:
+          # !! Add your recipes here
+          - recipe.yml
+    steps:
+      - name: Test Build
+        uses: blue-build/github-action@c295af864f2802fc6aea227507af43d35823db81 # v1.13.0
+        with:
+          recipe: ${{ matrix.recipe }}
+          cosign_private_key: ""
+          registry_token: ${{ github.token }}
+          pr_event_number: ${{ github.event.number }}
+          push: false
           maximize_build_space: true

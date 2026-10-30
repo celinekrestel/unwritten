@@ -73,15 +73,39 @@ sudo ostree admin pin --unpin 0
 > [!IMPORTANT]
 > Index numbers shift with each new incoming deployment. Always verify the correct index before pinning.
 
+> [!WARNING]
+> Unpin the deployment again once Unwritten runs well. A pinned deployment stays in the boot menu with its old software and its old update settings. If it is ever booted, it can pull updates from wherever it used to point.
+
 ### 2. Rebase to Unwritten
 
-First, rebase to the unsigned image to receive the proper signing keys:
+First, download the image:
 
 ```shell
 sudo bootc switch ghcr.io/celinekrestel/unwritten:latest
 ```
 
-After rebooting, `sudo` will no longer be available. Use **`run0`** going forward.
+Silverblue does not know Unwritten's signing key yet, so it accepts the image without checking it. Nothing from the image runs before you reboot, so check it now. Show what was downloaded and copy the digest (`sha256:…`) from the "Staged image" entry:
+
+```shell
+sudo bootc status
+```
+
+Get the public key from this repository. If you already have a machine that runs Unwritten, use its `/etc/pki/containers/unwritten.pub` instead, so that the key does not come from the same place as the image:
+
+```shell
+curl -fsSL -o cosign.pub https://raw.githubusercontent.com/celinekrestel/unwritten/main/cosign.pub
+```
+
+Check the digest against the key. Podman runs cosign, so nothing has to be installed. Replace `sha256:…` with your digest:
+
+```shell
+podman run --rm -v "$PWD/cosign.pub:/cosign.pub:ro,z" ghcr.io/sigstore/cosign/cosign:v3.0.6 verify --key /cosign.pub ghcr.io/celinekrestel/unwritten@sha256:…
+```
+
+> [!CAUTION]
+> If this check fails, do not reboot. Remove the download with `sudo rpm-ostree cleanup --pending`.
+
+Then reboot. After rebooting, `sudo` will no longer be available. Use **`run0`** going forward.
 
 If you change your mind, you can roll back to your previous deployment:
 

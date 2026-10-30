@@ -16,7 +16,7 @@
 ###########################
 
 # 1) I'm waiting for the Proton VPN app (from Flathub) to provide the advanced kill switch feature.
-# When this happens: in this recipe, delete the section 'Proton VPN app' and remove 'me.proton.vpn.split_tunneling.service' from the systemd list. In 'files/system/etc/xdg/autostart', delete 'proton.vpn.app.gtk.desktop'. In 'files/scripts', delete 'proton_vpn_app.sh'.
+# When this happens: in this recipe, delete the section 'Proton VPN app' and remove 'me.proton.vpn.split_tunneling.service' from the systemd list. In 'files/system/etc/xdg/autostart', delete 'proton.vpn.app.gtk.desktop'. In 'files/system/etc/dbus-1', delete 'system-local.conf'. In 'files/scripts', delete 'proton_vpn_app.sh'.
 
 # 2) I'm waiting for keepassxc#1232: the KeePassXC browser integration for the Flatpak version of Firefox. However, as of 2026-09-26, I don't see that Firefox (Flatpak) and KeePassXC (Flatpak) will officially work together via browser integration in the foreseeable future, and I won't use any workarounds suggested by online tutorials/guides.
 
@@ -79,8 +79,6 @@ modules:
         - evtest                           # Input device event monitor and query tool
         - hplip                            # HP Linux Imaging and Printing suite. Needed for the LaserJet 4000TN – hpcups renders on the PC and sends PCL;
                                            # the printer's 1997 PostScript interpreter fails on PDFs with images no matter the converter (pdftops, gs, pdftocairo all tested 2026-09-14).
-        - inxi                             # Feature-rich command line system information script
-        - libratbag-ratbagd                # Daemon for configuring programmable gaming mice
         - lshw                             # Detailed hardware lister utility
         - mt7xxx-firmware                  # Wi-Fi and Bluetooth firmware for the laptop's MediaTek MT7921 (was only a weak dependency)
         - nvme-cli                         # Command-line tool for managing NVMe SSDs
@@ -241,6 +239,8 @@ modules:
 # xpad (XInput controllers, e.g. 8BitDo Ultimate 2C via 2.4G dongle) lives in kernel-modules-extra.
 # Pinned to the base image's kernel, otherwise dnf pulls in a second, newer kernel.
 # updates-archive is needed when the base image kernel lags behind the updates repo.
+# The package brings about 100 other modules along. The risky ones that nothing here needs are
+# blocked in files/system/usr/lib/modprobe.d/90-unused-extra-modules.conf.
 
   - type: script
     snippets:
@@ -262,6 +262,10 @@ modules:
 
 # To test the advanced kill switch, do this → reboot, TTY, curl before login with this command:
 # curl -m 5 -sI https://example.com >/dev/null && echo "LEAK: traffic passes" || echo "blocked"
+
+# The split tunneling service stays enabled although I don't use split tunneling: the app asks for it
+# when it starts and doesn't cope with it being gone. Proton lets everyone on the machine call its
+# root services; files/system/etc/dbus-1/system-local.conf limits them to root and wheel.
 
   - type: script
     scripts:
@@ -479,6 +483,12 @@ modules:
 # Logitech Mouse
 #        - solaar-udev                      # Access rules for Solaar (Logitech receiver manager)
 #        - openrgb-udev-rules               # Hardware access rules for OpenRGB lighting control
+#        - libratbag-ratbagd                # Daemon for configuring programmable gaming mice. A root daemon that everyone on the machine
+#                                           # may call; it can write macros into the mouse. The mouse keeps its settings without it.
+
+# System information
+#        - inxi                             # Feature-rich command line system information script. Requires hddtemp (abandoned in 2007),
+#                                           # which any local user may run as root without a password (through usermode's setuid userhelper).
 
 ########################
 ## For Native Firefox ##
