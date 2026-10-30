@@ -32,13 +32,21 @@ cosign-version: none      # Container signing via cosign
 nushell-version: none     # BlueBuild scripting during the build process
 blue-build-tag: none      # BlueBuild won't append its tags to this image
 
+# Every module runs as root while the image is built, and the result gets my signature. So each
+# module is fixed to one exact build with 'source:' (unlike a tag, a digest can't be moved to other
+# code). 'dnf' and 'script' are used several times: the first entry holds the digest (&), the others
+# refer to it (*). To update: change the digest on a branch, merge once Test Build is green.
+# ~/.scripts/bluebuild_modules_check.sh shows which modules have a newer version.
+
 modules:
   - type: dnf
+    source: &dnf ghcr.io/blue-build/modules/dnf@sha256:e6cffa08197dc55f2cdc9f596e5bae6af4dc82e8a33884ff5a4edccc251b0218
     install:
       packages:
         - fedora-logos   # Provides base Fedora visual assets
 
   - type: files
+    source: ghcr.io/blue-build/modules/files@sha256:c93091889e5552a25d8169f8b5ba6d2cf201fd924f342025e6f2388c1ac4a356
     files:
       - source: system   # Copies local ./system directory files over to /
         destination: /
@@ -48,6 +56,7 @@ modules:
 ########################################################
 
   - type: dnf
+    source: *dnf
     remove:
       packages:
         # - console-login-helper-messages
@@ -57,6 +66,7 @@ modules:
         - toolbox                          # Replaced by distrobox (see below)
 
   - type: script
+    source: &script ghcr.io/blue-build/modules/script@sha256:d6076360da9195e2a6d781043a1b049bede3d2389757912a828a957bc78929b8
     snippets:
       - rm -f /usr/bin/chsh /usr/bin/lchsh # Footgun. See https://github.com/ublue-os/main/issues/598
 
@@ -65,6 +75,7 @@ modules:
 ################################################
 
   - type: dnf
+    source: *dnf
     repos:
       cleanup: true
     install:
@@ -244,6 +255,7 @@ modules:
 # blocked in files/system/usr/lib/modprobe.d/90-unused-extra-modules.conf.
 
   - type: script
+    source: *script
     snippets:
       - 'dnf5 -y install fedora-repos-archive'
       - 'dnf5 -y install --enable-repo=updates-archive kernel-modules-extra-$(rpm -q --qf "%{VERSION}-%{RELEASE}" kernel-core)'
@@ -254,6 +266,7 @@ modules:
 ##################
 
   - type: script
+    source: *script
     snippets:
       - 'dnf5 -y install f$(rpm -E %fedora)-backgrounds-gnome'   # Wallpapers that fit the current Fedora version
 
@@ -269,6 +282,7 @@ modules:
 # root services; files/system/etc/dbus-1/system-local.conf limits them to root and wheel.
 
   - type: script
+    source: *script
     scripts:
       - proton_vpn_app.sh
 
@@ -277,6 +291,7 @@ modules:
 ####################
 
   - type: dnf
+    source: *dnf
     repos:
       cleanup: true
     remove:
@@ -308,6 +323,7 @@ modules:
 # fprintd is not part of this image – without this, PAM will get noisy.
 
   - type: script
+    source: *script
     snippets:
       - authselect disable-feature with-fingerprint
 
@@ -319,6 +335,7 @@ modules:
 # https://vanillaos.org/nerd-info
 
   - type: script
+    source: *script
     scripts:
       - sudont.sh
 
@@ -327,6 +344,7 @@ modules:
 ################
 
   - type: os-release
+    source: ghcr.io/blue-build/modules/os-release@sha256:64c6ef094a55bc10073bbce4316e3ec5a4f357e396f449469fdd47844ed6ff66
     properties:
       ID: unwritten
       ID_LIKE: fedora
@@ -350,6 +368,7 @@ modules:
 # (firewall-offline-cmd calls it --remove-service-from-zone; its --remove-service is an old lokkit option.)
 
   - type: script
+    source: *script
     snippets:
       - firewall-offline-cmd --zone=public --remove-service-from-zone=ssh --remove-service-from-zone=mdns
 
@@ -360,6 +379,7 @@ modules:
 # Enable, disable and mask systemd services.
 
   - type: systemd
+    source: ghcr.io/blue-build/modules/systemd@sha256:2d2b3d8f7388a999544dbaa90de639f4bbe37f2f6adb4af8dabce5cb5cd4090a
     system:
       enabled:
         - gdm.service                              # Enables GNOME Display Manager on boot
@@ -396,6 +416,7 @@ modules:
         # Disable Plymouth (it is not part of Unwritten):
 
   - type: kargs
+    source: ghcr.io/blue-build/modules/kargs@sha256:e54b580450f2f6674721b8fc752686cd198fdfbe2210a2502a02dd16738ad247
     kargs:
       - plymouth.enable=0
       - rd.plymouth=0
@@ -445,12 +466,14 @@ modules:
 #################
 
   - type: initramfs
+    source: ghcr.io/blue-build/modules/initramfs@sha256:9959ae9f131c68019a189c6840db5c080db238f5ccb249651ff39756f623aad3
 
 ######################
 ##  Make it clean.  ##
 ######################
 
   - type: script
+    source: *script
     snippets:
       - rm -rf /usr/share/doc
       - rm -rf /usr/src
@@ -463,6 +486,7 @@ modules:
 # Set up policy & signing files for your signed image:
 
   - type: signing
+    source: ghcr.io/blue-build/modules/signing@sha256:6227e5ac294e9b60a77836775700df879d8a39b184ca3e511edf73cc58f1f4a6
 
 ######################
 ##  Lint the image  ##
@@ -472,6 +496,7 @@ modules:
 # Keep this as the last module.
 
   - type: script
+    source: *script
     snippets:
       - bootc container lint
 

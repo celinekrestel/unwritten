@@ -18,12 +18,31 @@ env:
   # Left out, the action would take whatever the moving tag v0.9 points to on that day.
   # Dependabot can't see this line. To update: raise it on a branch, merge once Test Build is green.
   BLUEBUILD_CLI_VERSION: v0.9.37
+  # The modules run with this Nushell (official release 0.106.0). The CLI hard-codes the moving tag
+  # 'default', so unlike the modules in recipe.yml it can't be fixed to a digest. So the build stops
+  # here if the image behind the tag changes. Check the new image, then update this line.
+  NUSHELL_IMAGE_DIGEST: sha256:cc8e2a552602d2ac3bc7a98e162bb68588d8e39fc50b2f5f2e0ca92db4d25cea
 jobs:
+  nushell-check:
+    name: Check Nushell Image
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Compare the digest
+        shell: bash
+        run: |
+          digest="sha256:$(skopeo inspect --raw docker://ghcr.io/blue-build/nushell-image:default | sha256sum | cut -d' ' -f1)"
+          if [ "${digest}" != "${NUSHELL_IMAGE_DIGEST}" ]; then
+            echo "::error::ghcr.io/blue-build/nushell-image:default is now ${digest}. Check it, then update NUSHELL_IMAGE_DIGEST."
+            exit 1
+          fi
+
   # Builds from main are pushed and signed. The signing key lives in the 'signing' environment,
   # which only lets in runs from main (Settings → Environments). A workflow file that was changed
   # on another branch can't get past that.
   bluebuild:
     name: Build Custom Image
+    needs: nushell-check
     if: github.ref == 'refs/heads/main'
     environment: signing
     runs-on: ubuntu-latest
@@ -58,6 +77,7 @@ jobs:
   # no key, and nothing is pushed.
   test-build:
     name: Test Build
+    needs: nushell-check
     if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

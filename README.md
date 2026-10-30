@@ -247,7 +247,7 @@ Names ending in `.local` also need `nss-mdns`, which the image excludes.
 
 ### Kernel hardening
 
-`/usr/lib/sysctl.d/90-hardening.conf` sets four kernel options; the file explains each one. The one you may notice: attaching `gdb` or `strace` to a program that is already running needs `run0`.
+`/usr/lib/sysctl.d/90-hardening.conf` sets five kernel options; the file explains each one. The one you may notice: attaching `gdb` or `strace` to a program that is already running needs `run0`.
 
 ### Backups (btrbk)
 
