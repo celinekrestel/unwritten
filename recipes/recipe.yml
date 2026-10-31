@@ -167,6 +167,7 @@ modules:
         - gnome-shell-extension-caffeine        # Keep the screen awake
         - gnome-shell-extension-appindicator    # Bring tray bar icons to GNOME
         - gnome-shell-extension-blur-my-shell   # Eye candy for GNOME
+        - gnome-shell-extension-just-perfection # Can also disable some UI elements
         - gnome-shell-extension-background-logo # Transparent Fedora background logo for your desktop
         - gvfs-fuse                             # FUSE support for the GNOME Virtual File System
         - gvfs-mtp                              # Media Transfer Protocol support (mounts Android phones)
