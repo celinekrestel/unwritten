@@ -115,6 +115,7 @@ modules:
         - flatpak                          # Linux application sandboxing and distribution framework
         - fzf                              # Command-line fuzzy finder for fast terminal searches
         - git                              # Distributed version control system
+        - libnotify                        # notify-send, for the message from the kill switch launcher
         - lynis                           # Security auditing tool for Unix-like systems
         - mbuffer                          # progress display for btrbk --progress
         - micro                            # Modern and intuitive terminal-based text editor
@@ -495,6 +496,7 @@ modules:
         - systemd-timesyncd.service                # Enables lightweight network time sync
         - systemd-resolved.service                 # Enables local DNS resolution daemon
         - me.proton.vpn.split_tunneling.service    # Proton VPN daemon
+        - killswitch.service                       # Blocks traffic outside the VPN tunnel; see the README: Notes, 'VPN and kill switch'
         - btrbk.timer                              # Enables btrfs backup timer routine
         - firewalld.service
       disabled:

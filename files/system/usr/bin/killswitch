@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Switches the VPN kill switch. 'off' lasts until the next reboot: killswitch.service is enabled in
+# the recipe, so every boot starts with the kill switch on. The rules are in
+# /usr/lib/unwritten/killswitch.nft, and 60-killswitch.rules lets this run without a password.
+
+unit="killswitch.service"
+
+state() {
+    if systemctl is-active --quiet "${unit}"; then echo "on"; else echo "off"; fi
+}
+
+tunnel() {
+    nmcli -t -f NAME,TYPE connection show --active \
+        | awk -F: '$2 == "wireguard" { print $1; found = 1 } END { if (!found) print "none" }'
+}
+
+switch_to() {
+    case "$1" in
+        on)  systemctl start "${unit}" ;;
+        off) systemctl stop "${unit}" ;;
+    esac
+}
+
+report() {
+    local message="Kill switch: $(state). Tunnel: $(tunnel)."
+    echo "${message}"
+    if [ "${1:-}" = "notify" ]; then
+        notify-send --app-name="Kill Switch" --icon=network-vpn-symbolic "${message}"
+    fi
+}
+
+case "${1:-status}" in
+    on | off)
+        switch_to "$1"
+        report
+        ;;
+    toggle)
+        if [ "$(state)" = "on" ]; then switch_to off; else switch_to on; fi
+        report notify
+        ;;
+    status)
+        report
+        ;;
+    *)
+        echo "Usage: killswitch on|off|toggle|status" >&2
+        exit 1
+        ;;
+esac

@@ -245,6 +245,32 @@ run0 firewall-cmd --reload
 
 Names ending in `.local` also need `nss-mdns`, which the image excludes.
 
+### VPN and kill switch
+
+The VPN is a set of plain WireGuard profiles from Proton, managed by NetworkManager. They hold private keys, so they live in `/etc/NetworkManager/system-connections` on each machine, never in this repository. Each machine gets its own profiles, because two machines can't share a key at the same time.
+
+The kill switch is on at every boot, before the network comes up. Without a tunnel there is no internet, on purpose. Its rules are in `/usr/lib/unwritten/killswitch.nft`, and they contain no server addresses.
+
+```shell
+killswitch             # Shows the state
+killswitch off         # Until the next reboot, for example for a Wi-Fi login page
+killswitch on
+```
+
+The **Kill Switch** launcher in the app grid does the same with one click. `fritz.box` doesn't resolve while the kill switch is on, but `http://192.168.178.1` works.
+
+To add a profile, name the file after the rule the kill switch expects, like `pvpn-de.conf`. The file name becomes the interface name, which has to start with `pvpn-`, and the mark has to match:
+
+```shell
+nmcli connection import type wireguard file pvpn-de.conf
+nmcli connection modify pvpn-de wireguard.fwmark 0xca6c ipv4.dns-priority -1500 ipv6.dns-priority -1500 connection.autoconnect no
+```
+
+Only one profile connects automatically, and only one should be active at a time: disconnect one before connecting the next.
+
+> [!WARNING]
+> A machine needs its profiles before it gets an image with the kill switch. Otherwise it boots without a tunnel and without internet, and `killswitch off` has to be run after every boot.
+
 ### Kernel hardening
 
 `/usr/lib/sysctl.d/90-hardening.conf` sets five kernel options; the file explains each one. The one you may notice: attaching `gdb` or `strace` to a program that is already running needs `run0`.
