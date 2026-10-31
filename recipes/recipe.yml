@@ -413,6 +413,18 @@ modules:
   #  install:
   #    - 5470      # Weather O'Clock: https://extensions.gnome.org/extension/5470/weather-oclock/
 
+######################
+##  GNOME defaults  ##
+######################
+
+# Defaults for every user, in files/system/usr/share/glib-2.0/schemas/zz1-unwritten.gschema.override.
+# A value set with gsettings still wins. --strict stops the build if a key in there no longer exists.
+
+  - type: script
+    source: *script
+    snippets:
+      - glib-compile-schemas --strict /usr/share/glib-2.0/schemas
+
 ##################
 ##  PAM / Auth  ##
 ##################
