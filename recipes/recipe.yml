@@ -18,7 +18,7 @@
 # 1) I'm waiting for the Proton VPN app (from Flathub) to provide the advanced kill switch feature.
 # When this happens: in this recipe, delete the section 'Proton VPN app' and remove 'me.proton.vpn.split_tunneling.service' from the systemd list. In 'files/system/etc/xdg/autostart', delete 'proton.vpn.app.gtk.desktop'. In 'files/system/etc/dbus-1', delete 'system-local.conf'. In 'files/scripts', delete 'proton_vpn_app.sh'.
 
-# 2) I'm waiting for keepassxc#1232: the KeePassXC browser integration for the Flatpak version of Firefox. However, as of 2026-09-26, I don't see that Firefox (Flatpak) and KeePassXC (Flatpak) will officially work together via browser integration in the foreseeable future, and I won't use any workarounds suggested by online tutorials/guides.
+# 2) I'm waiting for the KeePassXC browser integration for the Flatpak version of Firefox. However, as of 2026-09-26, I don't see that Firefox (Flatpak) and KeePassXC (Flatpak) will officially work together via browser integration in the foreseeable future, and I won't use any workarounds suggested by online tutorials/guides.
 
 ###########################################
 ##  Image metadata & base configuration  ##
@@ -85,10 +85,8 @@ modules:
         ##  Hardware & System Sensors  ##
         #################################
 
-        - alsa-firmware                    # Firmware for Advanced Linux Sound Architecture
         - alsa-sof-firmware                # Sound Open Firmware. Crucial for modern Intel/AMD audio DSPs
-        - evtest                           # Input device event monitor and query tool
-        - hplip                            # HP Linux Imaging and Printing suite. Needed for the LaserJet 4000TN – hpcups renders on the PC and sends PCL;
+        - hplip                           # HP Linux Imaging and Printing suite. Needed for the LaserJet 4000TN – hpcups renders on the PC and sends PCL;
                                            # the printer's 1997 PostScript interpreter fails on PDFs with images no matter the converter (pdftops, gs, pdftocairo all tested 2026-09-14).
         - lshw                             # Detailed hardware lister utility
         - mt7xxx-firmware                  # Wi-Fi and Bluetooth firmware for the laptop's MediaTek MT7921 (was only a weak dependency)
@@ -108,19 +106,16 @@ modules:
 
         - atuin                            # Magical shell history synced across multiple devices
         - bc                               # Basic Calculator. CLI tool for mathematical processing
-        - borgbackup                       # Deduplicating archiver with compression and encryption
         - btop                             # Beautiful terminal resource monitor (CPU, memory, disks)
         - btrbk                            # Tool for creating snapshots/backups of btrfs subvolumes
+        - cryptsetup                       # LUKS tool. The base image has it, but without Clevis nothing here needs it
         - cups                             # Common UNIX Printing System, required for printing
         - distrobox                        # Run any Linux distribution inside your terminal
         - firewalld                        # Dynamic firewall management daemon
         - flatpak                          # Linux application sandboxing and distribution framework
-        - fuse                             # Filesystem in Userspace (required for 'borg mount')
-        - fuse-libs                        # Libraries for Filesystem in Userspace
         - fzf                              # Command-line fuzzy finder for fast terminal searches
         - git                              # Distributed version control system
-        - gum                              # Tool for creating glamorous shell scripts
-        - lynis                            # Security auditing tool for Unix-like systems
+        - lynis                           # Security auditing tool for Unix-like systems
         - mbuffer                          # progress display for btrbk --progress
         - micro                            # Modern and intuitive terminal-based text editor
         - openssl                          # Toolkit for TLS/SSL cryptographic protocols
@@ -189,7 +184,6 @@ modules:
         - glibc-langpack-en                # English language pack for GNU C Library
         - glibc-langpack-fr                # French language pack for GNU C Library
         - google-noto-sans-cjk-vf-fonts    # Font support for Chinese, Japanese, and Korean
-        - ibus                             # Intelligent Input Bus, for multilingual keyboard input
 
         ############
         ##  Niri  ##
@@ -224,14 +218,18 @@ modules:
         - alacritty                        # niri's default terminal; not used here
         - avahi-tools                      # Network discovery tools; avahi is off
         - braille-printer-app              # Braille embosser support
+        - cpp                              # C preprocessor for xrdb; only X11 sessions call xrdb, and GNOME runs on Wayland here
         - cups-browsed                     # Finds and shares network printers; the printer is USB
         - cups-filters-driverless          # Driverless printing for network printers; the printer is USB
         - evolution-ews-core               # Microsoft Exchange support; not used
+        - exiv2                            # Image metadata tool; it can live in a distrobox, Nautilus only needs exiv2-libs
         - fuzzel                           # App launcher recommended by niri; Noctalia replaces it
         - gnome-remote-desktop             # Remote access to this machine; not wanted
         - gnome-tour                       # GNOME welcome tour
+        - google-noto-sans-mono-cjk-vf-fonts # Monospaced CJK; google-noto-sans-cjk-vf-fonts covers what I read
         - gst-thumbnailers                 # Thumbnailer for video and audio files in Nautilus (possible security implications)
-        - intel-mediasdk                   # Intel video acceleration; AMD machine
+        - ibus                             # Input methods and an emoji picker, 146 MB of dictionaries; gnome-shell only needs ibus-libs
+        - intel-mediasdk                  # Intel video acceleration; AMD machine
         - intel-vpl-gpu-rt                 # Intel video acceleration; AMD machine
         - ipp-usb                          # For modern driverless USB printers/scanners; neither device is one
         - libcamera-ipa                    # Only needed for MIPI cameras; USB webcams and DroidCam work without it
@@ -239,8 +237,11 @@ modules:
         - malcontent-control               # Parental controls
         - nss-mdns                         # Resolves .local names through avahi; avahi is off
         - pipewire-plugin-libcamera        # Only needed for MIPI cameras; USB webcams and DroidCam work without it
+        - python3-perf                     # Only tuned's scheduler plugin needs it, and no power profile uses that plugin
         - rygel                            # DLNA media sharing; not used
+        - sane-backends-drivers-cameras    # SANE camera drivers; the scanner is a Canon LiDE 200. Also keeps out the setgid lockdev
         - swaylock                         # Screen locker recommended by niri; Noctalia replaces it
+        - unbound-anchor                   # Refreshes DNSSEC root keys by timer for unbound, which doesn't run here
         - usbmuxd                          # iOS device support
         - waybar                           # Status bar recommended by niri; Noctalia replaces it
 
@@ -290,14 +291,17 @@ modules:
 ##  DNF removals  ##
 ####################
 
+# fedora-bootc is a server image. 'exclude:' doesn't reach what it brings along, because it only keeps
+# things out of what this recipe installs, so the base image's leftovers are removed here. This comes
+# after all installs, so that no weak dependency can bring them back. How to bring something back on
+# purpose is in the removal list at the end of this file.
+
   - type: dnf
     source: *dnf
     repos:
       cleanup: true
     remove:
       packages:
-        - ibus-libpinyin                   # Removes default Chinese Pinyin input method
-        - ibus-typing-booster              # Removes the typing autocomplete booster
         - yelp                             # Removes the default GNOME help browser
         - yelp-libs                        # Removes libraries associated with Yelp
         - yelp-xsl                         # Removes XSL stylesheets used by Yelp
@@ -305,6 +309,98 @@ modules:
         - nfsv3-client-utils               # No NFS on this system
         - nfsv4-client-utils               # No NFS on this system
         - nfs-common-utils                 # SUID mount.nfs helper
+
+        # NFS, Kerberos and Active Directory: what 'nfs*' and 'sssd*' left behind
+        - rpcbind
+        - gssproxy
+        - libnfsidmap
+        - quota
+        - quota-nls
+        - adcli
+        - adcli-selinux
+        - cyrus-sasl-gssapi
+        - libdhash
+        - libipa_hbac
+        - libsss_certmap
+        - libsss_idmap
+        - libsss_nss_idmap
+        - libsss_sudo
+
+        # Support reports for Red Hat, and the AWS SDK (125 MB) that only serves to upload them
+        - sos
+        - python3-boto3
+        - python3-botocore
+        - python3-dateutil
+        - python3-jmespath
+        - python3-s3transfer
+
+        # Firmware for hardware that neither machine has. Both are AMD with Realtek audio; the laptop's
+        # MX450 is off in the BIOS, its Wi-Fi and Bluetooth are in mt7xxx-firmware.
+        - atheros-firmware
+        - brcmfmac-firmware
+        - cirrus-audio-firmware
+        - intel-audio-firmware
+        - intel-gpu-firmware
+        - intel-npu-firmware
+        - microcode_ctl                    # Intel only; amd-ucode-firmware stays
+        - nvidia-gpu-firmware
+        - nxpwireless-firmware
+        - qcom-wwan-firmware
+        - realtek-firmware                 # Realtek Wi-Fi and Bluetooth only; the r8169 NIC's firmware is in linux-firmware
+        - tiwilink-firmware
+
+        # fwupd extras: modems, the picture shown during a capsule update, and a local network cache
+        - fwupd-plugin-modem-manager
+        - fwupd-plugin-uefi-capsule-data
+        - libmbim
+        - libqmi
+        - libqrtr-glib
+        - passim
+
+        # LUKS unlocking by TPM or network; I type my passphrase. See 60-no-lvm-no-clevis.conf
+        - clevis
+        - clevis-dracut
+        - clevis-luks
+        - clevis-pin-tpm2
+        - clevis-systemd
+        - jose
+        - libjose
+        - libluksmeta
+        - luksmeta
+        - tpm2-tools
+        - tpm2-tss-fapi
+
+        # LVM; the disks are LUKS with Btrfs. See 60-no-lvm-no-clevis.conf
+        - device-mapper-event
+        - device-mapper-event-libs
+        - device-mapper-persistent-data
+        - lvm2
+        - lvm2-libs
+
+        # Server and cloud tools with no job on a desktop
+        - NetworkManager-cloud-setup
+        - WALinuxAgent-udev
+        - chunkah
+        - cloud-utils-growpart
+        - criu
+        - criu-libs
+        - dracut-network
+        - dracut-squash
+        - kdump-utils
+        - kexec-tools
+        - makedumpfile
+        - net-tools
+        - openssh-server                   # sshd; the client stays
+        - sg3_utils
+        - sg3_utils-libs
+        - socat
+        - squashfs-tools
+        - stalld
+
+        # Command-line tools I don't use
+        - 7zip
+        - bind-libs
+        - bind-utils
 
 ########################
 ##  GNOME extensions  ##
@@ -362,7 +458,7 @@ modules:
 # announce itself there: avahi (mDNS) is disabled in the systemd module below, the printing and
 # discovery extras are excluded above, and LLMNR/mDNS are off in systemd-resolved
 # (files/system/usr/lib/systemd/resolved.conf.d/60-no-network-discovery.conf).
-# Fedora's public firewall zone also lets in ssh (the SSH server is off) and mdns (avahi is off);
+# Fedora's public firewall zone also lets in ssh (the SSH server is not installed) and mdns (avahi is off);
 # only DHCPv6 stays. A machine with its own /etc/firewalld/zones/public.xml keeps that file.
 # To bring discovery back on one machine, see the README: Notes, 'Network discovery'.
 # (firewall-offline-cmd calls it --remove-service-from-zone; its --remove-service is an old lokkit option.)
@@ -390,7 +486,6 @@ modules:
         - firewalld.service
       disabled:
         - rpm-ostree-countme.timer                 # Disables sending analytics/counting data to Fedora
-        - sshd.service                             # No remote logins; fedora-bootc enables the SSH server by default
         - avahi-daemon.service                     # No network discovery; see 'Firewall and network discovery'
         - avahi-daemon.socket                      # Would start avahi on demand
       masked:
@@ -398,6 +493,8 @@ modules:
         - bootc-fetch-apply-updates.service        # Stops automatic bootc updates
         - systemd-remount-fs.service               # Masks remount service (often unnecessary on OSTree)
         - flatpak-add-fedora-repos.service         # No Fedora Flatpak repo, Flathub lives in files/system/etc/flatpak/remotes.d/flathub.flatpakrepo
+        - mdmonitor.service                        # No RAID here; mdadm itself stays because udisks2 needs it
+        - raid-check.timer                         # No RAID here
     # user:
     #  enabled:
         # - some_service.service
@@ -505,6 +602,77 @@ modules:
 ##  My removal list for future reference ##
 ###########################################
 ###########################################
+
+# Nothing listed here is in the image, unless a section says otherwise. To bring a package back, add
+# it to the install list and delete it from 'exclude:' or 'DNF removals' if it is named there.
+# What comes with the base image can only go through 'DNF removals'; 'exclude:' doesn't reach it.
+
+########################
+## Removed 2026-10-31 ##
+########################
+
+# Unlocking LUKS with the TPM or a network server. I always type my passphrase.
+# To get it back, add these and take clevis, clevis-pin-tpm2 and tpm2-tss out of
+# files/system/usr/lib/dracut/dracut.conf.d/60-no-lvm-no-clevis.conf.
+  # - clevis
+  # - clevis-dracut
+  # - clevis-luks
+  # - clevis-pin-tpm2
+  # - clevis-systemd
+  # - tpm2-tools
+
+# Logical volumes. If these come back, the same file has to lose 'lvm'.
+  # - lvm2
+
+# Typing Chinese or Japanese, and the emoji picker. Input methods come on top of it.
+  # - ibus
+  # - ibus-libpinyin
+  # - ibus-typing-booster
+
+# For the laptop's GeForce MX450, which is off in the BIOS. Needed again if I switch it on.
+  # - nvidia-gpu-firmware
+
+# Logins from other machines. Also add sshd.service to the systemd module.
+  # - openssh-server
+
+# Backups with Borg. 'borg mount' needs the two fuse packages.
+  # - borgbackup
+  # - fuse
+  # - fuse-libs
+
+# For old sound cards, like my M-Audio Audiophile 2496. Brings alsa-tools-firmware along.
+  # - alsa-firmware
+
+# Debugging input devices:
+  # - evtest
+
+# Glamorous shell scripts. None of my scripts uses it.
+  # - gum
+
+# 'dig' and 'nslookup':
+  # - bind-utils
+
+# Packing archives on the command line; Nautilus handles them on its own.
+  # - 7zip
+
+# Everything else in 'DNF removals' is server software: support reports, NFS, Active Directory, cloud
+# tools and crash dumps. A desktop has no use for it.
+
+###########################
+## Wanted gone, but stay ##
+###########################
+
+# These are still in the image: other packages need them, so removing them would take those along.
+  # - fdk-aac-free                     # PipeWire uses this for AAC over Bluetooth; needed by pipewire-libs
+  # - gvfs-goa                         # GNOME Online Accounts; needed by gnome-online-accounts, which GNOME Settings needs
+  # - ibus-libs                        # Needed by gnome-shell and GNOME Settings
+  # - mdadm                            # Needed by udisks2; its units are masked instead
+  # - xhost                            # Legacy X11 forwarding; needed by xorg-x11-xinit, which gdm needs
+  # - xorg-x11-xauth                   # Same
+
+# Also still in the image, on purpose:
+  # - lshw                             # The hardware overview: 'lspci' isn't installed, and the CPU-X Flatpak may run commands outside its sandbox
+  # - mesa-vulkan-drivers              # 174 MB, but Nautilus renders with Vulkan. The Flatpaks bring their own drivers.
 
 # Logitech Mouse
 #        - solaar-udev                      # Access rules for Solaar (Logitech receiver manager)
@@ -688,14 +856,13 @@ modules:
 ## WLAN and Bluetooth Firmware ##
 #################################
   # - atheros-firmware
-  # - realtek-firmware
+  # - realtek-firmware       # for Realtek WLAN and Bluetooth only. The firmware of the wired r8169 network card (rtl_nic) is in linux-firmware, which stays.
   # - tiwilink-firmware      # for Texas Instruments WiFi/Bluetooth adapters
   # - nxpwireless-firmware   # for NXP WiFi/Bluetooth/UWB adapters
   # - brcmfmac-firmware      # for Broadcom
   # - iwlwifi-dvm-firmware   # for legacy Intel WLAN chips
   # - iwlwifi-mvm-firmware   # for modern Intel WLAN chips
   # - iwlwifi-mld-firmware   # for even more modern Intel WLAN chips
-  # - fdk-aac-free           # PipeWire uses this for AAC over Bluetooth
 
 ###############
 ## Emulation ##
@@ -705,8 +872,7 @@ modules:
 # ocl-icd is gone. → no host OpenCL. Everything GPU-computeish is a Flatpak anyway.
 
 # 2026-04-24 removals (listed for possible debugging):
-  # - mbuffer
-  # - alsa-tools-firmware              # Firmware loader tools for specific ALSA sound cards
+  # - alsa-tools-firmware             # Firmware loader tools for specific ALSA sound cards
   # - gvfs-smb                         # Windows file sharing (SMB) network support for GNOME
 
 ###################
@@ -720,10 +886,6 @@ modules:
   # - libva-intel-media-driver
 # THIS PREVENTS OVERHEATING IN INTEL LAPTOPS:
   # - thermald
-
-# Legacy X11 forwarding tools:
-  # - xhost
-  # - xorg-x11-xauth
 
 # AppImage support:
   # - squashfs-tools
@@ -789,9 +951,6 @@ modules:
 
 # GNOME manuals:
   # - gnome-user-docs
-
-# GNOME Online Accounts:
-  # - gvfs-goa
 
 # Virtualization Guest Tools:
   # - hyperv-daemons
