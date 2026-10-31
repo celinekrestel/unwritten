@@ -496,9 +496,9 @@ modules:
         - flatpak-add-fedora-repos.service         # No Fedora Flatpak repo, Flathub lives in files/system/etc/flatpak/remotes.d/flathub.flatpakrepo
         - mdmonitor.service                        # No RAID here; mdadm itself stays because udisks2 needs it
         - raid-check.timer                         # No RAID here
-    # user:
-    #  enabled:
-        # - some_service.service
+    user:
+      enabled:
+        - gcr-ssh-agent.socket                     # Enables the SSH agent that KeePassXC loads its keys into; Fedora's presets leave it off
 
 ############################
 ##  Set Kernel arguments  ##
