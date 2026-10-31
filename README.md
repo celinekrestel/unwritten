@@ -268,6 +268,21 @@ nmcli connection modify pvpn-de wireguard.fwmark 0xca6c ipv4.dns-priority -1500 
 
 Only one profile connects automatically, and only one should be active at a time: disconnect one before connecting the next.
 
+To test the kill switch, keep the tunnel from connecting at boot. With a tunnel up, `curl` gets through it and the test below wrongly says `LEAK`.
+
+```shell
+nmcli connection modify pvpn-de connection.autoconnect no
+systemctl reboot
+```
+
+Before logging in to GNOME, switch to a text console with Ctrl+Alt+F3, log in there and run this. It should say `blocked`:
+
+```shell
+curl -m 5 -sI https://example.com >/dev/null && echo "LEAK: traffic passes" || echo "blocked"
+```
+
+Then turn `connection.autoconnect` back on and connect with `nmcli connection up pvpn-de`.
+
 > [!WARNING]
 > A machine needs its profiles before it gets an image with the kill switch. Otherwise it boots without a tunnel and without internet, and `killswitch off` has to be run after every boot.
 

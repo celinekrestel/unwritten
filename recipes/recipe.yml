@@ -15,10 +15,7 @@
 ## What I am waiting for ##
 ###########################
 
-# 1) I'm waiting for the Proton VPN app (from Flathub) to provide the advanced kill switch feature.
-# When this happens: in this recipe, delete the section 'Proton VPN app' and remove 'me.proton.vpn.split_tunneling.service' from the systemd list. In 'files/system/etc/xdg/autostart', delete 'proton.vpn.app.gtk.desktop'. In 'files/system/etc/dbus-1', delete 'system-local.conf'. In 'files/scripts', delete 'proton_vpn_app.sh'.
-
-# 2) I'm waiting for the KeePassXC browser integration for the Flatpak version of Firefox. However, as of 2026-09-26, I don't see that Firefox (Flatpak) and KeePassXC (Flatpak) will officially work together via browser integration in the foreseeable future, and I won't use any workarounds suggested by online tutorials/guides.
+# 1) I'm waiting for the KeePassXC browser integration for the Flatpak version of Firefox. However, as of 2026-09-26, I don't see that Firefox (Flatpak) and KeePassXC (Flatpak) will officially work together via browser integration in the foreseeable future, and I won't use any workarounds suggested by online tutorials/guides.
 
 ###########################################
 ##  Image metadata & base configuration  ##
@@ -27,7 +24,7 @@
 name: unwritten
 description: Unwritten 44
 base-image: quay.io/fedora/fedora-bootc
-image-version: 44         # When raising this, update the Proton key fingerprint in files/scripts/proton_vpn_app.sh
+image-version: 44
 cosign-version: none      # Container signing via cosign
 nushell-version: none     # BlueBuild scripting during the build process
 blue-build-tag: none      # BlueBuild won't append its tags to this image
@@ -138,7 +135,6 @@ modules:
         ########################
 
         - NetworkManager-config-connectivity-fedora  # NetworkManager connectivity checks for Fedora
-        - NetworkManager-openvpn                     # OpenVPN integration for NetworkManager
         - NetworkManager-wifi                        # Core WiFi support for NetworkManager
         - wireguard-tools                            # Utilities for managing the WireGuard VPN protocol
 
@@ -272,22 +268,6 @@ modules:
     source: *script
     snippets:
       - 'dnf5 -y install f$(rpm -E %fedora)-backgrounds-gnome'   # Wallpapers that fit the current Fedora version
-
-######################
-##  Proton VPN app  ##
-######################
-
-# To test the advanced kill switch, do this → reboot, TTY, curl before login with this command:
-# curl -m 5 -sI https://example.com >/dev/null && echo "LEAK: traffic passes" || echo "blocked"
-
-# The split tunneling service stays enabled although I don't use split tunneling: the app asks for it
-# when it starts and doesn't cope with it being gone. Proton lets everyone on the machine call its
-# root services; files/system/etc/dbus-1/system-local.conf limits them to root and wheel.
-
-  - type: script
-    source: *script
-    scripts:
-      - proton_vpn_app.sh
 
 ####################
 ##  DNF removals  ##
@@ -495,7 +475,6 @@ modules:
         - gdm.service                              # Enables GNOME Display Manager on boot
         - systemd-timesyncd.service                # Enables lightweight network time sync
         - systemd-resolved.service                 # Enables local DNS resolution daemon
-        - me.proton.vpn.split_tunneling.service    # Proton VPN daemon
         - killswitch.service                       # Blocks traffic outside the VPN tunnel; see the README: Notes, 'VPN and kill switch'
         - btrbk.timer                              # Enables btrfs backup timer routine
         - firewalld.service
@@ -669,6 +648,15 @@ modules:
 
 # Packing archives on the command line; Nautilus handles them on its own.
   # - 7zip
+
+# The Proton VPN app: about 50 packages and 350 MB, most of it LLVM for split tunneling, which I
+# don't use. WireGuard profiles and the kill switch replace it; see the README: Notes, 'VPN and kill
+# switch'. It isn't in Fedora's repositories: the script that installed it safely and the D-Bus rules
+# that limited its root services are in Git, at commit 0a6acd8.
+  # - proton-vpn-gnome-desktop
+
+# OpenVPN for NetworkManager. Only the Proton app needed it; the WireGuard profiles don't.
+  # - NetworkManager-openvpn
 
 # Everything else in 'DNF removals' is server software: support reports, NFS, Active Directory, cloud
 # tools and crash dumps. A desktop has no use for it.
