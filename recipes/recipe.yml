@@ -380,8 +380,6 @@ modules:
 
         # Command-line tools I don't use
         - 7zip
-        - bind-libs
-        - bind-utils
 
 ########################
 ##  GNOME extensions  ##
@@ -649,9 +647,6 @@ modules:
 # Glamorous shell scripts. None of my scripts uses it.
   # - gum
 
-# 'dig' and 'nslookup':
-  # - bind-utils
-
 # Packing archives on the command line; Nautilus handles them on its own.
   # - 7zip
 
@@ -678,6 +673,12 @@ modules:
   # - mdadm                            # Needed by udisks2; its units are masked instead
   # - xhost                            # Legacy X11 forwarding; needed by xorg-x11-xinit, which gdm needs
   # - xorg-x11-xauth                   # Same
+
+# Since Fedora 45, removing bind-utils fails the build: its %postun runs 'alternatives --remove' for
+# 'dig', but the alternatives database lives under /var, which the base image doesn't carry. The
+# script exits with 2 and takes the whole removal with it. Try again once Fedora makes it tolerant.
+  # - bind-utils                       # 'dig', 'host' and 'nslookup'
+  # - bind-libs
 
 # Also still in the image, on purpose:
   # - lshw                             # The hardware overview: 'lspci' isn't installed, and the CPU-X Flatpak may run commands outside its sandbox
