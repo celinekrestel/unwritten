@@ -23,8 +23,8 @@ The name comes from that scene. When Lawrence returns, Sherif Ali concedes: 'Tru
 
 | | |
 | --- | --- |
-| Base | fedora-bootc 44 |
-| Desktop | GNOME, plus niri with Noctalia as a second session |
+| Base | fedora-bootc 45 |
+| Desktop | GNOME |
 | Apps | Flathub |
 | Privileges | `run0` instead of `sudo` |
 | Updates | manual, with rollback |

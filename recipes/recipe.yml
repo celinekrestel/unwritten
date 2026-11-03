@@ -3,7 +3,7 @@
 
 ##########################################
 ##          ##################          ##
-##          ## Unwritten 44 ##          ##
+##          ## Unwritten 45 ##          ##
 ##          ##################          ##
 ##########################################
 
@@ -22,9 +22,9 @@
 ###########################################
 
 name: unwritten
-description: Unwritten 44
+description: Unwritten 45
 base-image: quay.io/fedora/fedora-bootc
-image-version: 44
+image-version: 45
 cosign-version: none      # Container signing via cosign
 nushell-version: none     # BlueBuild scripting during the build process
 blue-build-tag: none      # BlueBuild won't append its tags to this image
@@ -121,7 +121,6 @@ modules:
         - rsync                            # Copy files
         - symlinks                         # A tiny utility to find and fix broken symlinks
         - systemd-oomd-defaults            # Out-of-memory daemon default configuration
-        - tealdeer                         # Fast Rust implementation of tldr (simplified man pages)
         - unzip                            # Utility to extract zip archives
         - wget                             # Command-line utility for downloading files from the web
         - wl-clipboard                     # Command-line copy/paste utilities for Wayland
@@ -439,8 +438,8 @@ modules:
       ID: unwritten
       ID_LIKE: fedora
       NAME: Unwritten
-      VERSION: "44"
-      PRETTY_NAME: Unwritten 44
+      VERSION: "45"
+      PRETTY_NAME: Unwritten 45
       DEFAULT_HOSTNAME: unwritten
       VERSION_CODENAME: Next
 
@@ -600,6 +599,13 @@ modules:
 # Nothing listed here is in the image, unless a section says otherwise. To bring a package back, add
 # it to the install list and delete it from 'exclude:' or 'DNF removals' if it is named there.
 # What comes with the base image can only go through 'DNF removals'; 'exclude:' doesn't reach it.
+
+########################
+## Removed 2026-11-03 ##
+########################
+
+# tldr pages. Fedora retired tealdeer before Fedora 45; the Python client 'tldr' does the same job.
+  # - tealdeer
 
 ########################
 ## Removed 2026-10-31 ##
