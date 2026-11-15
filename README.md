@@ -14,7 +14,7 @@ The name comes from that scene. When Lawrence returns, Sherif Ali concedes: 'Tru
 ### Principles
 
 - **Lean by design:** GNOME is assembled piece by piece instead of installed as a whole. Unwanted extras are kept out explicitly (see the exclude list in [`recipes/recipe.yml`](recipes/recipe.yml)).
-- **Apps come from Flathub:** the image carries the system, Flathub carries the apps.
+- **Apps come from Flathub, tools from Homebrew:** the image carries the system, Flathub the apps (installed per user), Homebrew the command-line tools. Neither touches the image.
 - **One image, two machines:** what is the same everywhere lives in the image; what is machine-specific lives in `/etc` and in my dotfiles.
 - **Careful defaults:** no `sudo` ([Sudon't](https://vanillaos.org/nerd-info)), SSH server off, no network discovery, core dumps disabled, a few kernel hardening settings, firewall on, signed images.
 - **Updates on my terms:** automatic updates are disabled; I update with `run0 bootc upgrade`.
@@ -25,7 +25,8 @@ The name comes from that scene. When Lawrence returns, Sherif Ali concedes: 'Tru
 | --- | --- |
 | Base | fedora-bootc 45 |
 | Desktop | GNOME |
-| Apps | Flathub |
+| Apps | Flathub, installed per user |
+| Command-line tools | Homebrew |
 | Privileges | `run0` instead of `sudo` |
 | Updates | manual, with rollback |
 | Machines | my AMD desktop and a Lenovo IdeaPad 5 Pro 14ACN6 laptop |
@@ -137,47 +138,49 @@ cosign verify --key cosign.pub ghcr.io/celinekrestel/unwritten
 
 *After rebasing from Silverblue to Unwritten*
 
-### Switch Flatpaks to Flathub
+### Move Flatpaks to your user installation
 
-*Silverblue installs its default apps from Fedora's own Flatpak remote. Rebasing keeps them, because Flatpaks live in `/var`, outside the image. Unwritten takes all apps from Flathub and deliberately does not add Fedora's remote, so this one-time step moves the apps over and removes Fedora's remote. Firefox is not part of the image, so it needs installing as well.*
-
-See what came from Fedora's remote:
+*Unwritten installs Flatpaks per user, from Flathub: installing and updating needs no password, and Flatpak's root helper for system-wide installs (`flatpak-system-helper`) is masked. Silverblue installs its default apps system-wide from Fedora's own remote, and rebasing keeps them, because Flatpaks live in `/var`, outside the image. One command moves them, once per machine. It does the same on a machine that ran Unwritten with system-wide Flatpaks before.*
 
 ```shell
-flatpak list --app --columns=application,name,origin | grep -w fedora
+flatpak-to-user
 ```
 
-Remove the apps you don't want (examples):
+It shows what it would move and asks first. Then it downloads every app and runtime again from Flathub into your installation. It copies pins, which keep a runtime that no app asks for, and masks, which stop updates, so a masked app keeps its version. Finally it removes the system copies and the system remotes; `run0` asks for your password once for that. App data in `~/.var/app` and your overrides stay where they are. An app that Flathub doesn't have stays in the system installation, together with its remote. Running it again is safe. Close running apps first, Steam especially: until they restart, they use their old copy.
+
+Then remove the apps you don't want (examples) and install a web browser:
 
 ```shell
 flatpak uninstall org.gnome.Maps org.gnome.Weather org.gnome.Contacts
-```
-
-Move the rest to Flathub (app data is kept):
-
-```shell
-for app in $(flatpak list --app --columns=application,origin | awk '$2 == "fedora" {print $1}'); do
-    if flatpak remote-info flathub "$app" >/dev/null 2>&1; then
-        flatpak uninstall -y "$app" && flatpak install -y flathub "$app"
-    else
-        echo "Not on Flathub, left alone: $app"
-    fi
-done
-```
-
-Remove the Fedora runtimes and the remote(s):
-
-```shell
-flatpak uninstall --unused
-flatpak remotes
-flatpak remote-delete fedora
-flatpak remote-delete fedora-testing   # if listed above
-```
-
-Install a web browser:
-
-```shell
 flatpak install flathub org.mozilla.firefox
+```
+
+### Homebrew
+
+*Command-line tools that don't belong in the image, such as ImageMagick or ClamAV, come from [Homebrew](https://brew.sh). It lives in one folder outside the image, `/home/linuxbrew/.linuxbrew` (which is `/var/home/linuxbrew/.linuxbrew`), and after the first command below it needs no root. Each program sits in `Cellar/<name>/<version>`, and `bin` holds links to them. Homebrew writes only to that folder and to `~/.cache/Homebrew`, never to the image, and updates and rollbacks of the image leave it alone. Its programs aren't sandboxed: they run with your rights, like anything else you start in the terminal.*
+
+Set it up once per machine:
+
+```shell
+run0 install -d -o "$USER" -g "$USER" /var/home/linuxbrew
+git clone https://github.com/Homebrew/brew /home/linuxbrew/.linuxbrew/Homebrew
+mkdir /home/linuxbrew/.linuxbrew/bin
+ln -s ../Homebrew/bin/brew /home/linuxbrew/.linuxbrew/bin/brew
+brew update
+```
+
+These are the steps of Homebrew's installer, without running a script from the internet. `/etc/profile.d/homebrew.sh` appends Homebrew's folders to the end of `PATH`, so a Homebrew package never takes the place of a system command, and it turns Homebrew's usage statistics off. Prebuilt packages don't need a compiler; if a formula has to be built, `brew install gcc` brings one.
+
+```shell
+brew install imagemagick       # Install a tool
+brew update && brew upgrade    # Update everything
+```
+
+To remove Homebrew completely:
+
+```shell
+rm -rf /var/home/linuxbrew/.linuxbrew ~/.cache/Homebrew
+run0 rmdir /var/home/linuxbrew
 ```
 
 ### The Terminal

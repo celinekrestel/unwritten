@@ -202,7 +202,7 @@ modules:
         ##  User Applications  ##
         #########################
 
-        # None.
+        # None. Apps come from Flathub, installed per user; command-line tools from Homebrew (see the README).
 
       ##################################
       ##  Excluded weak dependencies  ##
@@ -483,7 +483,8 @@ modules:
         - bootc-fetch-apply-updates.timer          # Stops automatic bootc fetches (manual control only)
         - bootc-fetch-apply-updates.service        # Stops automatic bootc updates
         - systemd-remount-fs.service               # Masks remount service (often unnecessary on OSTree)
-        - flatpak-add-fedora-repos.service         # No Fedora Flatpak repo, Flathub lives in files/system/etc/flatpak/remotes.d/flathub.flatpakrepo
+        - flatpak-add-fedora-repos.service         # No Fedora Flatpak repo; Flathub is a user remote (files/system/usr/share/unwritten/flathub.flatpakrepo, added by flatpak-to-user)
+        - flatpak-system-helper.service            # Root helper for system-wide Flatpaks; they're installed per user. See the README: 'Move Flatpaks to your user installation'
         - mdmonitor.service                        # No RAID here; mdadm itself stays because udisks2 needs it
         - raid-check.timer                         # No RAID here
     user:
