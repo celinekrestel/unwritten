@@ -1,0 +1,40 @@
+# Kill switch: nothing leaves this machine outside the VPN tunnel.
+#
+# killswitch.service loads this file at boot, before the network comes up, and 'killswitch off'
+# removes it again. It holds no server addresses, so changing a VPN server changes nothing here.
+# It relies on two settings in every WireGuard profile:
+#   connection.interface-name  pvpn-<country>
+#   wireguard.fwmark           0xca6c
+#
+# firewalld guards the way in and doesn't know about this table. A packet has to pass both.
+
+destroy table inet killswitch          # Replaces an older copy in one step, instead of adding to it
+
+table inet killswitch {
+    chain output {
+        type filter hook output priority filter; policy drop;
+
+        oifname "lo" accept                    # This machine talking to itself
+        oifname "pvpn-*" accept                # Everything inside the tunnel
+        meta mark 0xca6c accept                # WireGuard's encrypted packets; only root can set this mark
+
+        # Before the home network rule: without the tunnel, name lookups would go to the router and
+        # on to the provider. The price: 'fritz.box' doesn't resolve, 192.168.178.1 still works.
+        meta l4proto { tcp, udp } th dport 53 reject
+
+        udp sport 68 udp dport 67 accept       # DHCP renewals; first requests bypass this table
+        ip6 daddr { fe80::/10, ff02::/16 } accept  # IPv6 needs these to work on the local link
+
+        ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16 } accept  # Home network
+
+        counter reject                         # The counter shows how much the kill switch caught
+    }
+
+    # Only matters if something on this machine routes traffic, like a container with a bridge.
+    chain forward {
+        type filter hook forward priority filter; policy accept;
+
+        oifname "en*" reject
+        oifname "wl*" reject
+    }
+}

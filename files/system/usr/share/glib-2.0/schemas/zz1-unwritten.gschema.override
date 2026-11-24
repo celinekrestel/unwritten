@@ -1,0 +1,4 @@
+# GNOME hides "Log Out" for a single local user when only one session type is installed, which has
+# been the case here since niri left the image. I want it in the menu anyway.
+[org.gnome.shell]
+always-show-log-out=true

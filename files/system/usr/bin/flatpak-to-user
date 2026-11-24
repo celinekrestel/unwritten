@@ -1,0 +1,220 @@
+#!/usr/bin/env bash
+#
+# flatpak-to-user - moves the Flatpaks from the system installation into yours, from Flathub.
+#
+# Unwritten installs Flatpaks per user (see the README, 'Move Flatpaks to your user installation').
+# Run this once per machine, as yourself:
+#   1. It adds Flathub as a user remote and shows what it would move. Nothing moves before you agree.
+#   2. It installs every app and runtime again from Flathub into your installation. App data in
+#      ~/.var/app and your overrides belong to no installation, so they stay as they are.
+#   3. It copies pins and masks. A masked app keeps the version it has, as the mask intends.
+#   4. It removes the system copies, and the system remotes once nothing needs them. That takes
+#      root, because flatpak-system-helper is masked: run0 asks for your password once.
+# An app that Flathub doesn't have stays in the system installation. Running this again is safe.
+#
+# Usage: flatpak-to-user [--yes]
+
+set -euo pipefail
+
+remote=flathub
+remote_file=/usr/share/unwritten/flathub.flatpakrepo
+[[ -f ${remote_file} ]] || remote_file=https://dl.flathub.org/repo/flathub.flatpakrepo
+
+die() {
+    echo "flatpak-to-user: $*" >&2
+    exit 1
+}
+
+# ---------------------------------------------------------------- Step 4, as root
+
+# Called through run0 by the part below, with the apps that are now in the user installation.
+if [[ ${1:-} == --system-part ]]; then
+    shift
+    [[ ${EUID} -eq 0 ]] || die "--system-part is only for the run0 call below"
+    if (($# > 0)); then
+        flatpak uninstall --system --app -y --noninteractive "$@"
+    fi
+    if [[ -n $(flatpak list --system --app --columns=ref) ]]; then
+        # Apps that Flathub doesn't have stay, and so does what they need.
+        flatpak uninstall --system -y --noninteractive --unused
+        exit 0
+    fi
+    # No app is left, so nothing needs the runtimes, pins, masks and remotes any more.
+    if [[ -n $(flatpak list --system --columns=ref) ]]; then
+        flatpak uninstall --system --all -y --noninteractive
+    fi
+    while read -r pattern; do
+        if [[ -n ${pattern} ]]; then flatpak pin --system --remove "${pattern}"; fi
+    done < <(flatpak pin --system)
+    while read -r pattern; do
+        if [[ -n ${pattern} ]]; then flatpak mask --system --remove "${pattern}"; fi
+    done < <(flatpak mask --system)
+    while read -r name; do
+        if [[ -n ${name} ]]; then
+            flatpak remote-delete --system "${name}" || echo "The system remote ${name} stays." >&2
+        fi
+    done < <(flatpak remotes --system --show-disabled --columns=name)
+    exit 0
+fi
+
+# ---------------------------------------------------------------- Steps 1 to 3, as you
+
+[[ ${EUID} -ne 0 ]] || die "run this as yourself, not as root"
+[[ ! -e /run/.containerenv ]] || die "run this on the host, not in a container"
+
+assume_yes=false
+case $# in
+    0) ;;
+    1) [[ $1 == --yes ]] || die "usage: flatpak-to-user [--yes]"
+       assume_yes=true ;;
+    *) die "usage: flatpak-to-user [--yes]" ;;
+esac
+
+# Without empty lines: 'flatpak remotes' prints one when there are none. Disabled remotes count too,
+# such as Silverblue's fedora-testing.
+lines() {
+    sed -e 's/^[[:space:]]*//' -e '/^$/d'
+}
+mapfile -t system_apps < <(flatpak list --system --app --columns=ref | lines)
+mapfile -t system_runtimes < <(flatpak list --system --runtime --columns=ref | lines)
+mapfile -t system_pins < <(flatpak pin --system | lines)
+mapfile -t system_masks < <(flatpak mask --system | lines)
+mapfile -t system_remotes < <(flatpak remotes --system --show-disabled --columns=name | lines)
+
+if ((${#system_apps[@]} + ${#system_runtimes[@]} + ${#system_pins[@]} + ${#system_masks[@]} \
+    + ${#system_remotes[@]} == 0)); then
+    echo "The system installation is empty, nothing to move."
+    exit 0
+fi
+
+# Step 1: Flathub as a user remote, from the image's copy of its .flatpakrepo file.
+added_remote=false
+if ! flatpak remotes --user --columns=name | grep -qx "${remote}"; then
+    flatpak remote-add --user "${remote}" "${remote_file}"
+    added_remote=true
+fi
+
+# What Flathub has, as kind/name/arch/branch. A runtime that it lacks, such as Fedora's own, just
+# stays behind: nothing in your installation needs it.
+flathub_refs=$(flatpak remote-ls --user --app "${remote}" --columns=ref \
+    && flatpak remote-ls --user --runtime "${remote}" --columns=ref) \
+    || die "can't read Flathub. Is the kill switch on without a tunnel?"
+declare -A on_flathub=()
+while read -r ref; do
+    if [[ -n ${ref} ]]; then on_flathub[${ref}]=1; fi
+done <<<"${flathub_refs}"
+
+apps=() runtimes=() left=()
+for ref in "${system_apps[@]}"; do
+    if [[ -n ${on_flathub[app/${ref}]:-} ]]; then apps+=("${ref}"); else left+=("${ref}"); fi
+done
+for ref in "${system_runtimes[@]}"; do
+    if [[ -n ${on_flathub[runtime/${ref}]:-} ]]; then runtimes+=("${ref}"); fi
+done
+
+# What is in your installation already stays as it is, so a second run is cheap and a masked app
+# isn't touched again.
+declare -A in_user=()
+while read -r ref; do
+    if [[ -n ${ref} ]]; then in_user[${ref}]=1; fi
+done < <(flatpak list --user --columns=ref)
+new_runtimes=() new_apps=()
+for ref in "${runtimes[@]}"; do
+    if [[ -z ${in_user[${ref}]:-} ]]; then new_runtimes+=("${ref}"); fi
+done
+for ref in "${apps[@]}"; do
+    if [[ -z ${in_user[${ref}]:-} ]]; then new_apps+=("${ref}"); fi
+done
+already=$((${#apps[@]} + ${#runtimes[@]} - ${#new_apps[@]} - ${#new_runtimes[@]}))
+
+echo "From the system installation into yours, from Flathub:"
+echo "  ${#apps[@]} apps and ${#runtimes[@]} runtimes ($(du -sh /var/lib/flatpak 2>/dev/null | cut -f1) on disk now)"
+if ((already > 0)); then echo "  ${already} of them are in your installation already"; fi
+for ref in "${left[@]}"; do echo "  stays, Flathub doesn't have it: ${ref}"; done
+
+# A pin keeps a runtime that no app asks for, such as a Vulkan layer. Pins of runtimes that aren't
+# installed any more are left behind.
+declare -A moving=()
+for ref in "${apps[@]}" "${runtimes[@]}"; do moving[${ref}]=1; done
+pins=()
+for pattern in "${system_pins[@]}"; do
+    if [[ -n ${moving[${pattern#*/}]:-} ]]; then
+        pins+=("${pattern}")
+        echo "  pin: ${pattern}"
+    else
+        echo "  pin left behind, nothing installed matches it: ${pattern}"
+    fi
+done
+for pattern in "${system_masks[@]}"; do echo "  mask, the app keeps its version: ${pattern}"; done
+if ((${#new_apps[@]} + ${#new_runtimes[@]} > 0)); then
+    echo "The rest is downloaded again. App data in ~/.var/app and your overrides stay."
+else
+    echo "Nothing to download, only leftovers in the system installation go."
+fi
+
+if ! ${assume_yes}; then
+    read -r -p "Move them? [y/N] " answer || answer=""
+    if [[ ${answer} != [yY]* ]]; then
+        if ${added_remote}; then flatpak remote-delete --user "${remote}"; fi
+        echo "Nothing moved."
+        exit 0
+    fi
+fi
+
+# Step 2: into your installation.
+if ((${#new_runtimes[@]} > 0)); then
+    flatpak install --user -y --or-update --runtime "${remote}" "${new_runtimes[@]}"
+fi
+if ((${#new_apps[@]} > 0)); then
+    flatpak install --user -y --or-update --app "${remote}" "${new_apps[@]}"
+fi
+
+# Step 3: masks and pins. flatpak pins every runtime that is installed by name, so that
+# 'flatpak uninstall --unused' never removes it. Only those that were pinned before stay pinned.
+declare -A keep_pin=()
+for pattern in "${pins[@]}"; do keep_pin[${pattern}]=1; done
+user_pins=$(flatpak pin --user | sed 's/^[[:space:]]*//')
+for ref in "${runtimes[@]}"; do
+    if [[ -z ${keep_pin[runtime/${ref}]:-} ]] && grep -qxF "runtime/${ref}" <<<"${user_pins}"; then
+        flatpak pin --user --remove "runtime/${ref}"
+    fi
+done
+
+# A mask stops updates, so a masked app goes back to the commit it had.
+for pattern in "${system_masks[@]}"; do
+    for ref in "${apps[@]}"; do
+        [[ ${ref%%/*} == "${pattern}" ]] || continue
+        commit=$(flatpak info --system --show-commit "${ref}")
+        if [[ $(flatpak info --user --show-commit "${ref}") != "${commit}" ]] \
+            && ! flatpak update --user -y --commit="${commit}" "${ref}"; then
+            echo "Note: Flathub no longer has the old commit of ${ref}, so it has the latest version."
+        fi
+    done
+    if ! flatpak mask --user | sed 's/^[[:space:]]*//' | grep -qxF "${pattern}"; then
+        flatpak mask --user "${pattern}"
+    fi
+done
+for pattern in "${pins[@]}"; do
+    if ! flatpak pin --user | sed 's/^[[:space:]]*//' | grep -qxF "${pattern}"; then
+        flatpak pin --user "${pattern}"
+    fi
+done
+
+# The system copies only go once every app is in your installation.
+for ref in "${apps[@]}"; do
+    flatpak info --user "${ref}" >/dev/null 2>&1 \
+        || die "${ref} is missing from your installation, so the system copies stay. Run this again."
+done
+
+# Step 4: through sh, like the run0 function in /etc/profile.d/run0-selinux.sh (Fedora bug 2359828).
+echo
+echo "Now the system copies go. run0 asks for your password."
+run0 sh -c 'exec "$@"' sh "$(readlink -f "${BASH_SOURCE[0]}")" --system-part "${apps[@]}"
+
+echo
+echo "Done. A running app keeps its old copy until you restart it."
+if [[ -n $(ls -A /var/lib/flatpak/.removed 2>/dev/null) ]]; then
+    echo "After the next reboot, this frees the space of those old copies:"
+    echo "  run0 rm -rf /var/lib/flatpak/.removed"
+fi
+flatpak remotes

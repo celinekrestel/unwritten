@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Kill Switch
+Comment=Switch the VPN kill switch on or off
+Exec=killswitch toggle
+Icon=network-vpn-symbolic
+Terminal=false
+Type=Application
+Categories=Network;

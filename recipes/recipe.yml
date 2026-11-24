@@ -1,0 +1,976 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+
+##########################################
+##          ##################          ##
+##          ## Unwritten 45 ##          ##
+##          ##################          ##
+##########################################
+
+###################################################
+##  Find a removal log at the end of this file.  ##
+###################################################
+
+###########################
+## What I am waiting for ##
+###########################
+
+# 1) I'm waiting for the KeePassXC browser integration for the Flatpak version of Firefox. However, as of 2026-09-26, I don't see that Firefox (Flatpak) and KeePassXC (Flatpak) will officially work together via browser integration in the foreseeable future, and I won't use any workarounds suggested by online tutorials/guides.
+
+###########################################
+##  Image metadata & base configuration  ##
+###########################################
+
+name: unwritten
+description: Unwritten 45
+base-image: quay.io/fedora/fedora-bootc
+image-version: 45
+cosign-version: none      # Container signing via cosign
+nushell-version: none     # BlueBuild scripting during the build process
+blue-build-tag: none      # BlueBuild won't append its tags to this image
+
+# Every module runs as root while the image is built, and the result gets my signature. So each
+# module is fixed to one exact build with 'source:' (unlike a tag, a digest can't be moved to other
+# code). 'dnf' and 'script' are used several times: the first entry holds the digest (&), the others
+# refer to it (*). To update: change the digest on a branch, merge once Test Build is green.
+# ~/.scripts/bluebuild_modules_check.sh shows which modules have a newer version.
+
+modules:
+  - type: dnf
+    source: &dnf ghcr.io/blue-build/modules/dnf@sha256:e6cffa08197dc55f2cdc9f596e5bae6af4dc82e8a33884ff5a4edccc251b0218
+    install:
+      packages:
+        - fedora-logos   # Provides base Fedora visual assets
+
+  - type: files
+    source: ghcr.io/blue-build/modules/files@sha256:c93091889e5552a25d8169f8b5ba6d2cf201fd924f342025e6f2388c1ac4a356
+    files:
+      - source: system   # Copies local ./system directory files over to /
+        destination: /
+
+########################################################
+##  Remove packages from the fedora-bootc base image  ##
+########################################################
+
+  - type: dnf
+    source: *dnf
+    remove:
+      packages:
+        # - console-login-helper-messages
+        - chrony                           # Replaced with systemd-timesyncd (see systemd section)
+        - sssd*                            # Not needed if only local users are used
+        - qemu-user-static*                # Not needed unless cross-arch dev is required
+        - toolbox                          # Replaced by distrobox (see below)
+
+  - type: script
+    source: &script ghcr.io/blue-build/modules/script@sha256:d6076360da9195e2a6d781043a1b049bede3d2389757912a828a957bc78929b8
+    snippets:
+      - rm -f /usr/bin/chsh /usr/bin/lchsh # Footgun. See https://github.com/ublue-os/main/issues/598
+
+################################################
+##  Core Software, Utilities, and GNOME Base  ##
+################################################
+
+  - type: dnf
+    source: *dnf
+    repos:
+      cleanup: true
+    install:
+      packages:
+
+        #################################
+        ##  Hardware & System Sensors  ##
+        #################################
+
+        - alsa-sof-firmware                # Sound Open Firmware. Crucial for modern Intel/AMD audio DSPs
+        - hplip                           # HP Linux Imaging and Printing suite. Needed for the LaserJet 4000TN – hpcups renders on the PC and sends PCL;
+                                           # the printer's 1997 PostScript interpreter fails on PDFs with images no matter the converter (pdftops, gs, pdftocairo all tested 2026-09-14).
+        - lshw                             # Detailed hardware lister utility
+        - mt7xxx-firmware                  # Wi-Fi and Bluetooth firmware for the laptop's MediaTek MT7921 (was only a weak dependency)
+        - nvme-cli                         # Command-line tool for managing NVMe SSDs
+        - nvtop                            # Task monitor specifically for GPUs (AMD, Intel, NVIDIA)
+        - powerstat                        # Tool to measure laptop power consumption
+        - sane-backends-drivers-scanners   # Universal scanner drivers for Linux
+        - smartmontools                    # S.M.A.R.T. disk health monitoring utilities
+        - gnome-keyring                    # Secrets and passwords for GNOME apps
+        - pipewire-pulseaudio              # PulseAudio compatibility (Firefox, Flatpaks)
+        - wireplumber                      # Session manager for PipeWire
+        - xorg-x11-server-Xwayland         # For X11 apps on Wayland
+
+        ################################
+        ##  System Tools & Utilities  ##
+        ################################
+
+        - atuin                            # Magical shell history synced across multiple devices
+        - bc                               # Basic Calculator. CLI tool for mathematical processing
+        - btop                             # Beautiful terminal resource monitor (CPU, memory, disks)
+        - btrbk                            # Tool for creating snapshots/backups of btrfs subvolumes
+        - cryptsetup                       # LUKS tool. The base image has it, but without Clevis nothing here needs it
+        - cups                             # Common UNIX Printing System, required for printing
+        - distrobox                        # Run any Linux distribution inside your terminal
+        - firewalld                        # Dynamic firewall management daemon
+        - flatpak                          # Linux application sandboxing and distribution framework
+        - fzf                              # Command-line fuzzy finder for fast terminal searches
+        - git                              # Distributed version control system
+        - libnotify                        # notify-send, for the message from the kill switch launcher
+        - lynis                           # Security auditing tool for Unix-like systems
+        - mbuffer                          # progress display for btrbk --progress
+        - micro                            # Modern and intuitive terminal-based text editor
+        - openssl                          # Toolkit for TLS/SSL cryptographic protocols
+        - pv                               # Pipe Viewer, monitors the progress of data in pipelines
+        - rsync                            # Copy files
+        - symlinks                         # A tiny utility to find and fix broken symlinks
+        - systemd-oomd-defaults            # Out-of-memory daemon default configuration
+        - unzip                            # Utility to extract zip archives
+        - wget                             # Command-line utility for downloading files from the web
+        - wl-clipboard                     # Command-line copy/paste utilities for Wayland
+        - xwininfo                         # Window information utility for legacy X11 applications
+        - zram-generator-defaults          # Config to auto-generate a compressed RAM disk (zram)
+        - zstd                             # Zstandard fast real-time compression algorithm
+        - zsh                              # The Z shell, a highly customizable bash alternative
+
+        ########################
+        ##  Networking Tools  ##
+        ########################
+
+        - NetworkManager-config-connectivity-fedora  # NetworkManager connectivity checks for Fedora
+        - NetworkManager-wifi                        # Core WiFi support for NetworkManager
+        - wireguard-tools                            # Utilities for managing the WireGuard VPN protocol
+
+        ######################
+        ##  Media & Codecs  ##
+        ######################
+
+        - gstreamer1-plugin-openh264       # Without it, GNOME screencasts are saved as .webm instead of .mp4
+        # - libva-utils                    # Collection of testing utilities for VA-API
+        # - gstreamer1-plugin-libav        # FFmpeg-based decoders (H.264/HEVC via libavcodec-freeworld)
+        # - gstreamer1-plugins-good        # Core well-supported plugin set
+        # - gstreamer1-plugins-bad-free    # Parsers and demuxers incl. HEVC
+
+        ########################
+        ##  GNOME Components  ##
+        ########################
+
+        - gdm                                   # GNOME Display Manager (the login screen)
+        - glycin-thumbnailer                    # Sandboxed image thumbnailer used by modern GNOME apps
+        - gnome-bluetooth                       # Bluetooth pairing and management tools for GNOME
+        - gnome-color-manager                   # Display color profile manager for GNOME
+        - gnome-control-center                  # GNOME's main unified settings interface
+        - gnome-disk-utility                    # Disks application for formatting and mounting drives
+        - gnome-session-wayland-session         # Enables the Wayland session for GNOME
+        - gnome-settings-daemon                 # Background daemon handling GTK and session settings
+        - gnome-shell                           # The core user interface of the GNOME desktop
+        - gnome-shell-extension-caffeine        # Keep the screen awake
+        - gnome-shell-extension-appindicator    # Bring tray bar icons to GNOME
+        - gnome-shell-extension-blur-my-shell   # Eye candy for GNOME
+        - gnome-shell-extension-just-perfection # Can also disable some UI elements
+        - gnome-shell-extension-background-logo # Transparent Fedora background logo for your desktop
+        - gvfs-fuse                             # FUSE support for the GNOME Virtual File System
+        - gvfs-mtp                              # Media Transfer Protocol support (mounts Android phones)
+        - nautilus                              # GNOME's default file manager (Files)
+        - ptyxis                                # Container-oriented terminal emulator for GNOME
+        - xdg-desktop-portal-gnome              # GNOME backend for Flatpak file/screen-sharing portals
+        - xdg-user-dirs-gtk                     # Manages localized user directories (Documents, Downloads)
+
+        ############################
+        ##  Fonts, Themes & L10N  ##
+        ############################
+
+        - fira-code-fonts                  # Monospace font with programming ligatures
+        - glibc-langpack-de                # German language pack for GNU C Library
+        - glibc-langpack-en                # English language pack for GNU C Library
+        - glibc-langpack-fr                # French language pack for GNU C Library
+        - google-noto-sans-cjk-vf-fonts    # Font support for Chinese, Japanese, and Korean
+
+        ############
+        ##  Niri  ##
+        ############
+
+        #- niri                             # 'A scrollable-tiling Wayland compositor' written in Rust
+        #- noctalia                         # 'A family of native Wayland projects that feel like one desktop' written in C++
+
+        ####################
+        ##  For DeaDBeeF  ##
+        ####################
+
+        # Not installed while I test DeaDBeeF as a Flatpak (io.sourceforge.deadbeef from FlatPark).
+        # The native version needs both again.
+        # - gtk3                # DeaDBeeF is built on the GTK3 toolkit
+        # - libdbusmenu         # For DeaDBeeF's tray-icon plugin
+
+        #########################
+        ##  User Applications  ##
+        #########################
+
+        # None. Apps come from Flathub, installed per user; command-line tools from Homebrew (see the README).
+
+      ##################################
+      ##  Excluded weak dependencies  ##
+      ##################################
+
+      # dnf also installs packages that other packages merely recommend ("weak dependencies").
+      # These are kept out on purpose. If one of them ever becomes a hard dependency, the build fails and tells you.
+
+      exclude:
+        - alacritty                        # niri's default terminal; not used here
+        - avahi-tools                      # Network discovery tools; avahi is off
+        - braille-printer-app              # Braille embosser support
+        - cpp                              # C preprocessor for xrdb; only X11 sessions call xrdb, and GNOME runs on Wayland here
+        - cups-browsed                     # Finds and shares network printers; the printer is USB
+        - cups-filters-driverless          # Driverless printing for network printers; the printer is USB
+        - evolution-ews-core               # Microsoft Exchange support; not used
+        - exiv2                            # Image metadata tool; it can live in a distrobox, Nautilus only needs exiv2-libs
+        - fuzzel                           # App launcher recommended by niri; Noctalia replaces it
+        - gnome-remote-desktop             # Remote access to this machine; not wanted
+        - gnome-tour                       # GNOME welcome tour
+        - google-noto-sans-mono-cjk-vf-fonts # Monospaced CJK; google-noto-sans-cjk-vf-fonts covers what I read
+        - gst-thumbnailers                 # Thumbnailer for video and audio files in Nautilus (possible security implications)
+        - ibus                             # Input methods and an emoji picker, 146 MB of dictionaries; gnome-shell only needs ibus-libs
+        - intel-mediasdk                  # Intel video acceleration; AMD machine
+        - intel-vpl-gpu-rt                 # Intel video acceleration; AMD machine
+        - ipp-usb                          # For modern driverless USB printers/scanners; neither device is one
+        - libcamera-ipa                    # Only needed for MIPI cameras; USB webcams and DroidCam work without it
+        - libsane-hpaio                    # HP scanner backend; the scanner is a Canon LiDE 200 (USB)
+        - malcontent-control               # Parental controls
+        - nss-mdns                         # Resolves .local names through avahi; avahi is off
+        - pipewire-plugin-libcamera        # Only needed for MIPI cameras; USB webcams and DroidCam work without it
+        - python3-perf                     # Only tuned's scheduler plugin needs it, and no power profile uses that plugin
+        - rygel                            # DLNA media sharing; not used
+        - sane-backends-drivers-cameras    # SANE camera drivers; the scanner is a Canon LiDE 200. Also keeps out the setgid lockdev
+        - swaylock                         # Screen locker recommended by niri; Noctalia replaces it
+        - unbound-anchor                   # Refreshes DNSSEC root keys by timer for unbound, which doesn't run here
+        - usbmuxd                          # iOS device support
+        - waybar                           # Status bar recommended by niri; Noctalia replaces it
+
+############################
+##  Extra kernel modules  ##
+############################
+
+# xpad (XInput controllers, e.g. 8BitDo Ultimate 2C via 2.4G dongle) lives in kernel-modules-extra.
+# Pinned to the base image's kernel, otherwise dnf pulls in a second, newer kernel.
+# updates-archive is needed when the base image kernel lags behind the updates repo.
+# The package brings about 100 other modules along. The risky ones that nothing here needs are
+# blocked in files/system/usr/lib/modprobe.d/90-unused-extra-modules.conf.
+
+  - type: script
+    source: *script
+    snippets:
+      - 'dnf5 -y install fedora-repos-archive'
+      - 'dnf5 -y install --enable-repo=updates-archive kernel-modules-extra-$(rpm -q --qf "%{VERSION}-%{RELEASE}" kernel-core)'
+      - 'dnf5 -y remove fedora-repos-archive'
+
+##################
+##  Wallpapers  ##
+##################
+
+  - type: script
+    source: *script
+    snippets:
+      - 'dnf5 -y install f$(rpm -E %fedora)-backgrounds-gnome'   # Wallpapers that fit the current Fedora version
+
+####################
+##  DNF removals  ##
+####################
+
+# fedora-bootc is a server image. 'exclude:' doesn't reach what it brings along, because it only keeps
+# things out of what this recipe installs, so the base image's leftovers are removed here. This comes
+# after all installs, so that no weak dependency can bring them back. How to bring something back on
+# purpose is in the removal list at the end of this file.
+
+  - type: dnf
+    source: *dnf
+    repos:
+      cleanup: true
+    remove:
+      packages:
+        - yelp                             # Removes the default GNOME help browser
+        - yelp-libs                        # Removes libraries associated with Yelp
+        - yelp-xsl                         # Removes XSL stylesheets used by Yelp
+        - nfs-utils                        # Removes the background daemon for mounting Linux NFS network shares
+        - nfsv3-client-utils               # No NFS on this system
+        - nfsv4-client-utils               # No NFS on this system
+        - nfs-common-utils                 # SUID mount.nfs helper
+
+        # NFS, Kerberos and Active Directory: what 'nfs*' and 'sssd*' left behind
+        - rpcbind
+        - gssproxy
+        - libnfsidmap
+        - quota
+        - quota-nls
+        - adcli
+        - adcli-selinux
+        - cyrus-sasl-gssapi
+        - libdhash
+        - libipa_hbac
+        - libsss_certmap
+        - libsss_idmap
+        - libsss_nss_idmap
+        - libsss_sudo
+
+        # Support reports for Red Hat, and the AWS SDK (125 MB) that only serves to upload them
+        - sos
+        - python3-boto3
+        - python3-botocore
+        - python3-dateutil
+        - python3-jmespath
+        - python3-s3transfer
+
+        # Firmware for hardware that neither machine has. Both are AMD with Realtek audio; the laptop's
+        # MX450 is off in the BIOS, its Wi-Fi and Bluetooth are in mt7xxx-firmware.
+        - atheros-firmware
+        - brcmfmac-firmware
+        - cirrus-audio-firmware
+        - intel-audio-firmware
+        - intel-gpu-firmware
+        - intel-npu-firmware
+        - microcode_ctl                    # Intel only; amd-ucode-firmware stays
+        - nvidia-gpu-firmware
+        - nxpwireless-firmware
+        - qcom-wwan-firmware
+        - realtek-firmware                 # Realtek Wi-Fi and Bluetooth only; the r8169 NIC's firmware is in linux-firmware
+        - tiwilink-firmware
+
+        # fwupd extras: modems, the picture shown during a capsule update, and a local network cache
+        - fwupd-plugin-modem-manager
+        - fwupd-plugin-uefi-capsule-data
+        - libmbim
+        - libqmi
+        - libqrtr-glib
+        - passim
+
+        # LUKS unlocking by TPM or network; I type my passphrase. See 60-no-lvm-no-clevis.conf
+        - clevis
+        - clevis-dracut
+        - clevis-luks
+        - clevis-pin-tpm2
+        - clevis-systemd
+        - jose
+        - libjose
+        - libluksmeta
+        - luksmeta
+        - tpm2-tools
+        - tpm2-tss-fapi
+
+        # LVM; the disks are LUKS with Btrfs. See 60-no-lvm-no-clevis.conf
+        - device-mapper-event
+        - device-mapper-event-libs
+        - device-mapper-persistent-data
+        - lvm2
+        - lvm2-libs
+
+        # Server and cloud tools with no job on a desktop
+        - NetworkManager-cloud-setup
+        - WALinuxAgent-udev
+        - chunkah
+        - cloud-utils-growpart
+        - criu
+        - criu-libs
+        - dracut-network
+        - dracut-squash
+        - kdump-utils
+        - kexec-tools
+        - makedumpfile
+        - net-tools
+        - openssh-server                   # sshd; the client stays
+        - sg3_utils
+        - sg3_utils-libs
+        - socat
+        - squashfs-tools
+        - stalld
+
+        # Command-line tools I don't use
+        - 7zip
+
+########################
+##  GNOME extensions  ##
+########################
+
+# For GNOME extensions that are not in the Fedora repository.
+
+  #- type: gnome-extensions
+  #  install:
+  #    - 5470      # Weather O'Clock: https://extensions.gnome.org/extension/5470/weather-oclock/
+
+######################
+##  GNOME defaults  ##
+######################
+
+# Defaults for every user, in files/system/usr/share/glib-2.0/schemas/zz1-unwritten.gschema.override.
+# A value set with gsettings still wins. --strict stops the build if a key in there no longer exists.
+
+  - type: script
+    source: *script
+    snippets:
+      - glib-compile-schemas --strict /usr/share/glib-2.0/schemas
+
+##################
+##  PAM / Auth  ##
+##################
+
+# fprintd is not part of this image – without this, PAM will get noisy.
+
+  - type: script
+    source: *script
+    snippets:
+      - authselect disable-feature with-fingerprint
+
+###############
+##  Sudon't  ##
+###############
+
+# I try to follow the Sudon't approach of VanillaOS; see:
+# https://vanillaos.org/nerd-info
+
+  - type: script
+    source: *script
+    scripts:
+      - sudont.sh
+
+################
+##  Stamp it  ##
+################
+
+  - type: os-release
+    source: ghcr.io/blue-build/modules/os-release@sha256:64c6ef094a55bc10073bbce4316e3ec5a4f357e396f449469fdd47844ed6ff66
+    properties:
+      ID: unwritten
+      ID_LIKE: fedora
+      NAME: Unwritten
+      VERSION: "45"
+      PRETTY_NAME: Unwritten 45
+      DEFAULT_HOSTNAME: unwritten
+      VERSION_CODENAME: Next
+
+######################################
+##  Firewall and network discovery  ##
+######################################
+
+# This machine doesn't look for printers, scanners or other devices on the network, and it doesn't
+# announce itself there: avahi (mDNS) is disabled in the systemd module below, the printing and
+# discovery extras are excluded above, and LLMNR/mDNS are off in systemd-resolved
+# (files/system/usr/lib/systemd/resolved.conf.d/60-no-network-discovery.conf).
+# Fedora's public firewall zone also lets in ssh (the SSH server is not installed) and mdns (avahi is off);
+# only DHCPv6 stays. A machine with its own /etc/firewalld/zones/public.xml keeps that file.
+# To bring discovery back on one machine, see the README: Notes, 'Network discovery'.
+# (firewall-offline-cmd calls it --remove-service-from-zone; its --remove-service is an old lokkit option.)
+
+  - type: script
+    source: *script
+    snippets:
+      - firewall-offline-cmd --zone=public --remove-service-from-zone=ssh --remove-service-from-zone=mdns
+
+########################
+##  Systemd services  ##
+########################
+
+# Enable, disable and mask systemd services.
+
+  - type: systemd
+    source: ghcr.io/blue-build/modules/systemd@sha256:2d2b3d8f7388a999544dbaa90de639f4bbe37f2f6adb4af8dabce5cb5cd4090a
+    system:
+      enabled:
+        - gdm.service                              # Enables GNOME Display Manager on boot
+        - systemd-timesyncd.service                # Enables lightweight network time sync
+        - systemd-resolved.service                 # Enables local DNS resolution daemon
+        - killswitch.service                       # Blocks traffic outside the VPN tunnel; see the README: Notes, 'VPN and kill switch'
+        - btrbk.timer                              # Enables btrfs backup timer routine
+        - firewalld.service
+      disabled:
+        - rpm-ostree-countme.timer                 # Disables sending analytics/counting data to Fedora
+        - avahi-daemon.service                     # No network discovery; see 'Firewall and network discovery'
+        - avahi-daemon.socket                      # Would start avahi on demand
+      masked:
+        - bootc-fetch-apply-updates.timer          # Stops automatic bootc fetches (manual control only)
+        - bootc-fetch-apply-updates.service        # Stops automatic bootc updates
+        - systemd-remount-fs.service               # Masks remount service (often unnecessary on OSTree)
+        - flatpak-add-fedora-repos.service         # No Fedora Flatpak repo; Flathub is a user remote (files/system/usr/share/unwritten/flathub.flatpakrepo, added by flatpak-to-user)
+        - flatpak-system-helper.service            # Root helper for system-wide Flatpaks; they're installed per user. See the README: 'Move Flatpaks to your user installation'
+        - mdmonitor.service                        # No RAID here; mdadm itself stays because udisks2 needs it
+        - raid-check.timer                         # No RAID here
+    user:
+      enabled:
+        - gcr-ssh-agent.socket                     # Enables the SSH agent that KeePassXC loads its keys into; Fedora's presets leave it off
+
+############################
+##  Set Kernel arguments  ##
+############################
+
+# Kernel settings that can change at runtime (sysctl) are in
+# files/system/usr/lib/sysctl.d/90-hardening.conf, each with an explanation.
+
+        #############################
+        # Plymouth, kernel argument #
+        #############################
+
+        # Disable Plymouth (it is not part of Unwritten):
+
+  - type: kargs
+    source: ghcr.io/blue-build/modules/kargs@sha256:e54b580450f2f6674721b8fc752686cd198fdfbe2210a2502a02dd16738ad247
+    kargs:
+      - plymouth.enable=0
+      - rd.plymouth=0
+      - rd.info=1
+
+        ####################################
+        # Full Preemption, kernel argument #
+        ####################################
+
+        # Turn on Full Preemption:
+
+      - preempt=full
+
+        # Check this with 'grep -o 'preempt=full' /proc/cmdline' → it should say: 'preempt=full';
+        # Check this also with 'run0 cat /sys/kernel/debug/sched/preempt' → it should say: '(full) lazy'.
+
+        #############################
+        # Keyboard, kernel argument #
+        #############################
+
+        # For my Varmilo keyboard, so I don't have to press the 'FN' key to get 'F1'–'F12' working.
+
+      - hid_apple.fnmode=2
+
+        ################################
+        # Compression, kernel argument #
+        ################################
+
+        # Transparent zstd:1 compression for the whole system-disk btrfs.
+
+      - rootflags=subvol=root,compress=zstd:1
+
+        # Explanation:
+        # Btrfs takes fs-wide options (compress, commit, ...) from the FIRST mount of a filesystem, which on
+        # bootc is /sysroot from the initrd via rootflags= — so compress=zstd:1 on the /var and /var/home
+        # fstab lines is ignored, and systemd-remount-fs (masked, and /var is not / under composefs) can't help.
+        # subvol=root MUST stay in the value: the install-time rootflags=subvol=root is still on the cmdline,
+        # and this form is correct whether the two get concatenated or the last one wins.
+        # Verify: 'findmnt -t btrfs -o TARGET,OPTIONS' → /sysroot, /var and /var/home show compress=zstd:1.
+        # Only data written after this is compressed; do not defragment to recompress while btrbk snapshots exist.
+        # See: https://discussion.fedoraproject.org/t/root-mount-options-are-ignored-in-fedora-atomic-desktops-42-and-later/148562
+        # See: https://gitlab.com/fedora/ostree/sig/-/work_items/72
+        # See: https://github.com/ublue-os/bazzite/issues/3602
+
+#################
+##  Initramfs  ##
+#################
+
+  - type: initramfs
+    source: ghcr.io/blue-build/modules/initramfs@sha256:9959ae9f131c68019a189c6840db5c080db238f5ccb249651ff39756f623aad3
+
+######################
+##  Make it clean.  ##
+######################
+
+  - type: script
+    source: *script
+    snippets:
+      - rm -rf /usr/share/doc
+      - rm -rf /usr/src
+      - dnf5 clean all
+
+######################
+##  Sign the image  ##
+######################
+
+# Set up policy & signing files for your signed image:
+
+  - type: signing
+    source: ghcr.io/blue-build/modules/signing@sha256:6227e5ac294e9b60a77836775700df879d8a39b184ca3e511edf73cc58f1f4a6
+
+######################
+##  Lint the image  ##
+######################
+
+# bootc's own checks for common image mistakes. Fatal problems fail the build; warnings are only printed.
+# Keep this as the last module.
+
+  - type: script
+    source: *script
+    snippets:
+      - bootc container lint
+
+###########################################
+###########################################
+##  My removal list for future reference ##
+###########################################
+###########################################
+
+# Nothing listed here is in the image, unless a section says otherwise. To bring a package back, add
+# it to the install list and delete it from 'exclude:' or 'DNF removals' if it is named there.
+# What comes with the base image can only go through 'DNF removals'; 'exclude:' doesn't reach it.
+
+########################
+## Removed 2026-11-03 ##
+########################
+
+# tldr pages. Fedora retired tealdeer before Fedora 45; the Python client 'tldr' does the same job.
+  # - tealdeer
+
+########################
+## Removed 2026-10-31 ##
+########################
+
+# Unlocking LUKS with the TPM or a network server. I always type my passphrase.
+# To get it back, add these and take clevis, clevis-pin-tpm2 and tpm2-tss out of
+# files/system/usr/lib/dracut/dracut.conf.d/60-no-lvm-no-clevis.conf.
+  # - clevis
+  # - clevis-dracut
+  # - clevis-luks
+  # - clevis-pin-tpm2
+  # - clevis-systemd
+  # - tpm2-tools
+
+# Logical volumes. If these come back, the same file has to lose 'lvm'.
+  # - lvm2
+
+# Typing Chinese or Japanese, and the emoji picker. Input methods come on top of it.
+  # - ibus
+  # - ibus-libpinyin
+  # - ibus-typing-booster
+
+# For the laptop's GeForce MX450, which is off in the BIOS. Needed again if I switch it on.
+  # - nvidia-gpu-firmware
+
+# Logins from other machines. Also add sshd.service to the systemd module.
+  # - openssh-server
+
+# Backups with Borg. 'borg mount' needs the two fuse packages.
+  # - borgbackup
+  # - fuse
+  # - fuse-libs
+
+# For old sound cards, like my M-Audio Audiophile 2496. Brings alsa-tools-firmware along.
+  # - alsa-firmware
+
+# Debugging input devices:
+  # - evtest
+
+# Glamorous shell scripts. None of my scripts uses it.
+  # - gum
+
+# Packing archives on the command line; Nautilus handles them on its own.
+  # - 7zip
+
+# The Proton VPN app: about 50 packages and 350 MB, most of it LLVM for split tunneling, which I
+# don't use. WireGuard profiles and the kill switch replace it; see the README: Notes, 'VPN and kill
+# switch'. It isn't in Fedora's repositories: the script that installed it safely and the D-Bus rules
+# that limited its root services are in Git, at commit 0a6acd8.
+  # - proton-vpn-gnome-desktop
+
+# OpenVPN for NetworkManager. Only the Proton app needed it; the WireGuard profiles don't.
+  # - NetworkManager-openvpn
+
+# Everything else in 'DNF removals' is server software: support reports, NFS, Active Directory, cloud
+# tools and crash dumps. A desktop has no use for it.
+
+###########################
+## Wanted gone, but stay ##
+###########################
+
+# These are still in the image: other packages need them, so removing them would take those along.
+  # - fdk-aac-free                     # PipeWire uses this for AAC over Bluetooth; needed by pipewire-libs
+  # - gvfs-goa                         # GNOME Online Accounts; needed by gnome-online-accounts, which GNOME Settings needs
+  # - ibus-libs                        # Needed by gnome-shell and GNOME Settings
+  # - mdadm                            # Needed by udisks2; its units are masked instead
+  # - xhost                            # Legacy X11 forwarding; needed by xorg-x11-xinit, which gdm needs
+  # - xorg-x11-xauth                   # Same
+
+# Since Fedora 45, removing bind-utils fails the build: its %postun runs 'alternatives --remove' for
+# 'dig', but the alternatives database lives under /var, which the base image doesn't carry. The
+# script exits with 2 and takes the whole removal with it. Try again once Fedora makes it tolerant.
+  # - bind-utils                       # 'dig', 'host' and 'nslookup'
+  # - bind-libs
+
+# Also still in the image, on purpose:
+  # - lshw                             # The hardware overview: 'lspci' isn't installed, and the CPU-X Flatpak may run commands outside its sandbox
+  # - mesa-vulkan-drivers              # 174 MB, but Nautilus renders with Vulkan. The Flatpaks bring their own drivers.
+
+# Logitech Mouse
+#        - solaar-udev                      # Access rules for Solaar (Logitech receiver manager)
+#        - openrgb-udev-rules               # Hardware access rules for OpenRGB lighting control
+#        - libratbag-ratbagd                # Daemon for configuring programmable gaming mice. A root daemon that everyone on the machine
+#                                           # may call; it can write macros into the mouse. The mouse keeps its settings without it.
+
+# System information
+#        - inxi                             # Feature-rich command line system information script. Requires hddtemp (abandoned in 2007),
+#                                           # which any local user may run as root without a password (through usermode's setuid userhelper).
+
+########################
+## For Native Firefox ##
+########################
+# 1) Add the section 'Media codecs (RPM Fusion) — REVISIT when the native-messaging portal lands upstream'
+# 2) Add the section 'For RPM Fusion'
+# 3) Add these packages: 'adw-gtk3-theme' and 'firefox'
+
+###########################################################################################
+##  Media codecs (RPM Fusion) — REVISIT when the native-messaging portal lands upstream. ##
+###########################################################################################
+# → Note that the comments in this section are obsolete. I have switched to Firefox (Flatpak).
+
+# This section goes down as soon as I switch to Firefox (Flatpak).
+
+# Deliberately placed AFTER the main package block: the -freeworld packages
+# replace their Fedora counterparts, so those have to be installed first.
+
+# Why I include a codec stack on the host at all:
+
+# Firefox (native rpm) uses host Mesa for VA-API and libavcodec for decode.
+# Native Firefox is needed because KeePassXC integration needs to spawn a host process.
+# The Flatpak workarounds require granting Firefox host-exec rights, which defeats the sandbox.
+# What's at stake is phishing protection: the extension matches the stored URL against the page.
+
+# Everything else (mpv, Steam, all other Flatpaks) gets hardware decode from the Freedesktop runtime's → extra branches, independent of this block.
+
+#  - type: dnf
+#    repos:
+#      cleanup: true
+#      nonfree: rpmfusion
+#    install:
+#      packages:
+#        - mesa-va-drivers-freeworld  # VA-API H.264/HEVC; Fedora's mesa has codecs stripped
+#        - libavcodec-freeworld       # H.264/HEVC decode for native Firefox
+
+####################
+## For RPM Fusion ##
+####################
+# If you ever use RPM Fusion again, add this to 'Make it clean':
+#      - rm -f /etc/yum.repos.d/rpmfusion-nonfree-nvidia-driver.repo
+#      - rm -f /etc/yum.repos.d/rpmfusion-nonfree-steam.repo
+
+############################################
+##  Version lock (for third-party repos)  ##
+############################################
+  # Uncomment this section IF you add third party repos, such as rpmfusion; negativo 17 is set to priority 90 (sufficient)
+  #- type: script
+  #  snippets:
+  #    - dnf5 versionlock add libheif libva mesa-dri-drivers mesa-filesystem mesa-libEGL mesa-libGL mesa-libgbm mesa-va-drivers mesa-vulkan-drivers ocl-icd
+
+#############
+## Utility ##
+#############
+# - clamav                           # Open-source command-line antivirus engine
+# - clamav-freshclam                 # Auto-updater for ClamAV virus signature databases
+
+#########################
+## Printers & Scanners ##
+#########################
+# - libsane-hpaio                    # HP network scanner support (part of HPLIP)
+
+###########
+## Fonts ##
+###########
+# - google-noto-sans-balinese-fonts  # Font support for Balinese script
+# - google-noto-sans-javanese-fonts  # Font support for Javanese script
+# - google-noto-sans-sundanese-fonts # Font support for Sundanese script
+# - jetbrains-mono-fonts-all         # Excellent monospace font designed for developers
+# - ibm-plex-sans-fonts              # IBM's open-source corporate typeface
+
+######################
+## GNOME extensions ##
+######################
+# RPM:
+# - gnome-shell-extension-just-perfection
+
+# type: gnome-extensions:
+# - 7065    # Tiling Shell: https://extensions.gnome.org/extension/7065/tiling-shell/
+# - 5506    # User Avatar In Quick Settings: https://extensions.gnome.org/extension/5506/user-avatar-in-quick-settings/
+# GSConnect, i.e. 1319 (https://extensions.gnome.org/extension/1319/gsconnect/)
+######################
+
+##########################
+##  For using the COPR  ##
+##########################
+# For using the COPR, get dnf5-plugins and use the version lock:
+
+# 1)
+# modules:
+#  - type: dnf
+#    install:
+#      packages:
+#        - fedora-logos   # Provides base Fedora visual assets
+#        - dnf5-plugins   # Essential plugins for DNF5 (needed for COPR)
+
+# 2)
+# Add '- dnf5 versionlock clear' to 'Make it clean'.
+
+#########################
+
+# Support for ALL languages:
+  # - glibc-all-langpacks
+
+# For .justfile scripts:
+  # - just
+
+# Screen reader for individuals who are visually impaired:
+# - orca
+# For testing purposes, install orca with 'bootc usr-overlay'
+
+# Terminal multiplexer:
+  # - tmux
+
+# Universal Blue Update (automatic updates):
+  # - uupd
+
+# Header files for devs:
+  # - libcap-ng-devel
+  # - procps-ng-devel
+
+# Homebrew support:
+  # - brew-setup.service
+
+# Custom kernel signing:
+  # - akmods-keygen@akmods-keygen.service
+  # - akmods-keygen.target
+
+###############
+## mpv (RPM) ##
+###############
+# I install mpv from Flathub now.
+  # - mpv
+  # - mpv-mpris
+  # - libavcodec
+
+#############################
+##  DeaDBeeF (RPM Fusion)  ##
+#############################
+# 1) Install DeaDBeeF
+# Add this and make sure these are *the last* RPM packages to be installed:
+  #- type: dnf
+  #  repos:
+  #    cleanup: true
+  #    nonfree: rpmfusion
+  #  install:
+  #    packages:
+  #      - deadbeef                         # Minimalist audio player for GNU/Linux
+  #      - deadbeef-plugins                 # Essential playback plugins for DeaDBeeF
+
+# 2) Set DeaDBeeF to dark theme with this script:
+
+# For the recipe.yml:
+  #- type: script
+  #  scripts:
+  #    - deadbeef.sh
+
+# Add '/files/deadbeef.sh' with this:
+# #!/bin/bash
+# sed -i 's/^Exec=deadbeef %F$/Exec=env GTK_THEME=Adwaita:dark deadbeef %F/' /usr/share/applications/deadbeef.desktop
+
+#########################
+#########################
+##                     ##
+## Drivers & Utilities ##
+##                     ##
+#########################
+#########################
+
+#################################
+## WLAN and Bluetooth Firmware ##
+#################################
+  # - atheros-firmware
+  # - realtek-firmware       # for Realtek WLAN and Bluetooth only. The firmware of the wired r8169 network card (rtl_nic) is in linux-firmware, which stays.
+  # - tiwilink-firmware      # for Texas Instruments WiFi/Bluetooth adapters
+  # - nxpwireless-firmware   # for NXP WiFi/Bluetooth/UWB adapters
+  # - brcmfmac-firmware      # for Broadcom
+  # - iwlwifi-dvm-firmware   # for legacy Intel WLAN chips
+  # - iwlwifi-mvm-firmware   # for modern Intel WLAN chips
+  # - iwlwifi-mld-firmware   # for even more modern Intel WLAN chips
+
+###############
+## Emulation ##
+###############
+  # - systemd-container                # Tools for managing local containers; machinectl/nspawn/vmspawn; Recommends qemu-kvm-core → 64M emulator. No VMs, no nspawn for this image.
+
+# ocl-icd is gone. → no host OpenCL. Everything GPU-computeish is a Flatpak anyway.
+
+# 2026-04-24 removals (listed for possible debugging):
+  # - alsa-tools-firmware             # Firmware loader tools for specific ALSA sound cards
+  # - gvfs-smb                         # Windows file sharing (SMB) network support for GNOME
+
+###################
+## Intel support ##
+###################
+  # - intel-vaapi-driver
+  # - intel-gmmlib
+  # - intel-mediasdk
+  # - intel-vpl-gpu-rt
+  # - intel-audio-firmware
+  # - libva-intel-media-driver
+# THIS PREVENTS OVERHEATING IN INTEL LAPTOPS:
+  # - thermald
+
+# AppImage support:
+  # - squashfs-tools
+  # - squashfuse-libs
+
+# Android mounting. It's done via gvfs-mtp by GNOME now.
+  # - jmtpfs
+
+####################
+## Webcam support ##
+####################
+# Comment: DroidCam (Android) works without this.
+  # - libcamera
+  # - libcamera-gstreamer
+  # - libcamera-ipa
+  # - libcamera-tools
+  # - pipewire-plugin-libcamera
+  # - libcamera-v4l2
+
+# Picture Transfer Protocol (PTP) support. Needed for old digital cameras.
+  # - gvfs-gphoto2
+
+# Fingerprint reader:
+  # - fprintd
+  # - fprintd-pam
+
+############
+## FFmpeg ##
+############
+  # - ffmpeg
+  # - ffmpeg-libs
+  # - ffmpegthumbnailer
+
+# Legacy commands like 'ipconfig' and 'route':
+  # - net-tools
+# Comment: Just use 'ip addr' or 'ip link' instead.
+
+# iOS support (iPhone, iPod Touch, iPad and Apple TV, etc.):
+  # - usbmuxd
+  # - libimobiledevice-utils
+
+# Multi-factor authentication (YubiKey, etc.):
+  # - pam-u2f
+  # - pam_yubico
+  # - pamu2fcfg
+
+# Smart Card readers:
+  # - pcsc-lite
+
+# Apache Portable Runtime:
+  # - apr
+  # - apr-util
+
+# More GRUB tools (usually not needed for bootc):
+  # - grub2-tools-extra
+
+# DSL modem and LTE/5G modem support:
+  # - NetworkManager-adsl
+  # - NetworkManager-wwan
+
+# GNOME Connections support (for connections to YOUR device):
+  # - gnome-remote-desktop
+
+# GNOME manuals:
+  # - gnome-user-docs
+
+# Virtualization Guest Tools:
+  # - hyperv-daemons
+  # - qemu-guest-agent
+  # - open-vm-tools
+  # - open-vm-tools-desktop
+
+# For very old WLAN Cards:
+  # - iwlegacy-firmware
+
+# Steering Wheel Manager (Oversteer) input:
+  # - oversteer-udev
