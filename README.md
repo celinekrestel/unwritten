@@ -14,15 +14,14 @@ When Lawrence returns, Sherif Ali concedes: 'Truly, for some men nothing is writ
 | Component | Setup |
 | :--- | :--- |
 | 🪶 Lean Base | **1,012 RPM packages** |
-| 🍦 Desktop | **Vanilla GNOME** |
-| 📦 GUI Apps | **Flatpak** |
-| 🍺 CLI Tools | **Homebrew** |
+| 🍦 Desktop | ![GNOME](https://img.shields.io/badge/GNOME-%234A86CF.svg?style=for-the-badge&logo=gnome&logoColor=white) |
+| 📦 GUI Apps | ![Flatpak](https://img.shields.io/badge/flatpak-%234A90D9.svg?style=for-the-badge&logo=flatpak&logoColor=white) |
+| 🍺 CLI Tools | ![Homebrew](https://img.shields.io/badge/homebrew-%23FBB040.svg?style=for-the-badge&logo=homebrew&logoColor=black) |
 | 🐳 Containers | **Distrobox** |
-| 🐚 Shell | **Z Shell** |
 | 🛡️ Privilege Escalation | **No `sudo` — using `run0`** ([Sudon't](https://vanillaos.org/nerd-info)) |
 | 🔌 Network | **Built-in internet kill switch** |
 | ⚓ Updates | **Manual only** (no automatic updates) |
-| 🕊️ Graphics | **100% open-source drivers** (no NVIDIA) |
+| 🕊️ Graphics | ![AMD](https://img.shields.io/badge/amd-%23ED1C24.svg?style=for-the-badge&logo=amd&logoColor=white) |
 
 > [!Note]
 > The internet kill switch is enabled by default. Run `killswitch off` to disable it.
@@ -31,15 +30,15 @@ When Lawrence returns, Sherif Ali concedes: 'Truly, for some men nothing is writ
 
 ## 💿 Installation
 
-### Prerequisites
+### 1. ⬇️ Install Silverblue
 
 Install [Fedora Silverblue](https://fedoraproject.org/atomic-desktops/silverblue/).
 
-Use the **default (automatic) partitioning**; encryption is fine. Unwritten expects Fedora's default btrfs layout, see [Btrfs layout](#btrfs-layout).
+Use the **default (automatic) partitioning**; encryption is optional, but recommended. Unwritten expects Fedora's default btrfs layout, see [Btrfs layout](#btrfs-layout).
 
-Import your **WireGuard profiles** and let one of them connect automatically. Unwritten's kill switch blocks the internet without a tunnel, see [Add a profile](#add-a-profile).
+Import your **WireGuard VPN profiles** and let one of them connect automatically. Unwritten's kill switch blocks the internet without a tunnel, see [Add a profile](#add-a-profile).
 
-### 1. Pin a safe deployment
+### 2. 📌 Pin a safe deployment
 
 List your current deployments:
 
@@ -59,7 +58,7 @@ sudo ostree admin pin 0
 > [!Important]
 > Unpin the deployment again once Unwritten runs well, see [step 4](#4-unpin-the-safe-deployment).
 
-### 2. Rebase to Unwritten
+### 3. 🔄 Rebase to Unwritten
 
 Download the image:
 
@@ -91,7 +90,7 @@ podman run --rm -v "$PWD/cosign.pub:/cosign.pub:ro,z" ghcr.io/sigstore/cosign/co
 > [!Caution]
 > If this check fails, do not reboot. Remove the download with `sudo rpm-ostree cleanup --pending`.
 
-Reboot:
+If everything is in order, reboot:
 
 ```shell
 systemctl reboot
@@ -109,7 +108,7 @@ run0 bootc rollback
 > [!Note]
 > `bootc rollback` only returns to Silverblue as long as you haven't updated or rebased again. The deployment pinned in step 1 stays in the boot menu either way.
 
-### 3. Rebase to the signed image
+### 4. 🔐 Rebase to the signed image
 
 Once Unwritten runs well, rebase to the signed image:
 
@@ -120,9 +119,9 @@ run0 bootc switch --enforce-container-sigpolicy ghcr.io/celinekrestel/unwritten:
 > [!Note]
 > From now on, `bootc` checks the signature of every update.
 
-### 4. Unpin the safe deployment
+### 5. 🧹 Unpin the safe deployment
 
-Look up the deployment you pinned in step 1. It is marked 'Pinned: yes', and its index has shifted since:
+Look up the deployment you pinned in step 1. It is marked `Pinned: yes`, and its index has shifted since:
 
 ```shell
 rpm-ostree status -v
@@ -140,9 +139,7 @@ run0 ostree admin pin --unpin 2
 
 ### 📦 Flatpak
 
-**What?**
-
-In this step, we move all Flatpaks to `user` and Flathub.
+We move all Flatpaks to `user` and Flathub.
 
 **Why?**
 
@@ -176,11 +173,13 @@ flatpak install flathub org.mozilla.firefox
 
 ### 🍺 Homebrew
 
-In this step, we set up Homebrew.
+We set up Homebrew.
 
 **Why?**
 
-Command-line tools that don't belong in the image, such as ImageMagick or ClamAV, come from [Homebrew](https://brew.sh). It lives in one folder outside the image, `/home/linuxbrew/.linuxbrew` (which is `/var/home/linuxbrew/.linuxbrew`), needs no root after the setup, and updates and rollbacks of the image leave it alone. Its programs aren't sandboxed: they run with your rights, like anything else you start in the terminal.
+[Homebrew](https://brew.sh) provides command-line tools that don't belong in the image, such as ImageMagick or ClamAV. The binaries will be installed in a directory outside the image: `/home/linuxbrew/.linuxbrew` (which is `/var/home/linuxbrew/.linuxbrew`). After the setup, no root is needed; homebrew is not affected by bootc updates or rollbacks. The tools are not sandboxed: they run with user rights, like anything else you start in the terminal.
+
+**How?**
 
 Set it up once per machine:
 
@@ -195,13 +194,13 @@ brew update
 > [!Note]
 > These are the steps of Homebrew's installer, without running a script from the internet. `/etc/profile.d/homebrew.sh` appends Homebrew's folders to the end of `PATH`, so a Homebrew package never takes the place of a system command, and it turns Homebrew's usage statistics off.
 
-To install a tool:
+To **install** a tool:
 
 ```shell
 brew install imagemagick
 ```
 
-To update everything:
+To **update** everything:
 
 ```shell
 brew update && brew upgrade
@@ -210,7 +209,7 @@ brew update && brew upgrade
 > [!Note]
 > Prebuilt packages don't need a compiler. If a formula has to be built, `brew install gcc` brings one.
 
-To remove Homebrew completely:
+To **remove** Homebrew completely:
 
 ```shell
 rm -rf /var/home/linuxbrew/.linuxbrew ~/.cache/Homebrew
@@ -256,7 +255,7 @@ eval "$(starship init zsh)"
 
 ---
 
-## Notes
+## 📝 Notes
 
 ### run0 and SELinux
 
@@ -321,15 +320,17 @@ The **Kill Switch** launcher in the app grid switches it on and off with one cli
 
 #### Add a profile
 
-Name the WireGuard file like `pvpn-de.conf`, then import it and set the mark:
+Name the WireGuard file like `pvpn-de.conf`.
+
+> [!Important]
+> The file name becomes the interface name, which has to start with `pvpn-`, and the mark has to be `0xca6c`. Let only one profile connect automatically, and keep only one active at a time: disconnect one before connecting the next.
+
+Import it and set the mark:
 
 ```shell
 nmcli connection import type wireguard file pvpn-de.conf
 nmcli connection modify pvpn-de wireguard.fwmark 0xca6c ipv4.dns-priority -1500 ipv6.dns-priority -1500 connection.autoconnect no
 ```
-
-> [!Important]
-> The file name becomes the interface name, which has to start with `pvpn-`, and the mark has to be `0xca6c`. Let only one profile connect automatically, and keep only one active at a time: disconnect one before connecting the next.
 
 To let it connect automatically:
 
