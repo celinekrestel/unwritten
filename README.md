@@ -18,23 +18,26 @@ When Lawrence returns, Sherif Ali concedes: 'Truly, for some men nothing is writ
 | 📦 GUI Apps | **Flatpak** |
 | 🍺 CLI Tools | **Homebrew** |
 | 🐳 Containers | **Distrobox** |
+| 🐚 Shell | **Z Shell** |
 | 🛡️ Privilege Escalation | **No `sudo` — using `run0`** ([Sudon't](https://vanillaos.org/nerd-info)) |
 | 🔌 Network | **Built-in internet kill switch** |
 | ⚓ Updates | **Manual only** (no automatic updates) |
 | 🕊️ Graphics | **100% open-source drivers** (no NVIDIA) |
 
->[!Note]
->The internet kill switch is enabled by default. Run `killswitch off` to disable it.
+> [!Note]
+> The internet kill switch is enabled by default. Run `killswitch off` to disable it.
 
 ---
 
-## Installation
+## 💿 Installation
 
 ### Prerequisites
 
 Install [Fedora Silverblue](https://fedoraproject.org/atomic-desktops/silverblue/).
 
 Use the **default (automatic) partitioning**; encryption is fine. Unwritten expects Fedora's default btrfs layout, see [Btrfs layout](#btrfs-layout).
+
+Import your **WireGuard profiles** and let one of them connect automatically. Unwritten's kill switch blocks the internet without a tunnel, see [Add a profile](#add-a-profile).
 
 ### 1. Pin a safe deployment
 
@@ -50,17 +53,11 @@ Pin a deployment by its index number. For example, to pin index `0`:
 sudo ostree admin pin 0
 ```
 
-To unpin it later:
-
-```shell
-sudo ostree admin pin --unpin 0
-```
-
 > [!Note]
 > Index numbers shift with each new incoming deployment.
 
 > [!Important]
-> Unpin the deployment again once Unwritten runs well.
+> Unpin the deployment again once Unwritten runs well, see [step 4](#4-unpin-the-safe-deployment).
 
 ### 2. Rebase to Unwritten
 
@@ -70,7 +67,10 @@ Download the image:
 sudo bootc switch ghcr.io/celinekrestel/unwritten:latest
 ```
 
-Silverblue does not know Unwritten's signing key yet, so it accepts the image without checking it. Nothing from the image runs before you reboot, so check it now. Show what was downloaded and copy the digest (`sha256:…`) from the 'Staged image' entry:
+> [!Important]
+> Silverblue does not know Unwritten's signing key yet, so it accepts the image without checking it. Nothing from the image runs before you reboot, so check it now.
+
+Show what was downloaded and copy the digest (`sha256:…`) from the 'Staged image' entry:
 
 ```shell
 sudo bootc status
@@ -82,67 +82,105 @@ Get the public key from this repository (if another machine that runs Unwritten 
 curl -fsSL -o cosign.pub https://raw.githubusercontent.com/celinekrestel/unwritten/main/cosign.pub
 ```
 
-Check the digest against the key. Podman runs cosign, so nothing has to be installed. Replace `sha256:…` with your digest:
+Check the digest against the key. Podman runs [cosign](https://github.com/sigstore/cosign), so nothing has to be installed. Replace `sha256:…` with your digest:
 
 ```shell
 podman run --rm -v "$PWD/cosign.pub:/cosign.pub:ro,z" ghcr.io/sigstore/cosign/cosign:v3.0.6 verify --key /cosign.pub ghcr.io/celinekrestel/unwritten@sha256:…
 ```
 
-> [!CAUTION]
+> [!Caution]
 > If this check fails, do not reboot. Remove the download with `sudo rpm-ostree cleanup --pending`.
 
-Then reboot. After rebooting, `sudo` will no longer be available. Use **`run0`** going forward.
-
-If you change your mind, you can roll back to your previous deployment:
+Reboot:
 
 ```shell
-# Only use this if you wish to revert:
+systemctl reboot
+```
+
+> [!Important]
+> After the reboot, use `run0` instead of `sudo`. If no VPN tunnel comes up, the kill switch blocks the internet: run `killswitch off` until you have added your profiles, see [VPN and kill switch](#vpn-and-kill-switch).
+
+To go back to Silverblue:
+
+```shell
 run0 bootc rollback
 ```
 
-> [!NOTE]
-> `bootc rollback` is only effective if you have **not** updated the system after rebasing. Once a second deployment from the new remote image source is pulled, rollback will not return you to the previous source.
+> [!Note]
+> `bootc rollback` only returns to Silverblue as long as you haven't updated or rebased again. The deployment pinned in step 1 stays in the boot menu either way.
 
-Once you are satisfied, rebase to the signed image to complete the installation:
+### 3. Rebase to the signed image
+
+Once Unwritten runs well, rebase to the signed image:
 
 ```shell
 run0 bootc switch --enforce-container-sigpolicy ghcr.io/celinekrestel/unwritten:latest
 ```
 
-### Verification
+> [!Note]
+> From now on, `bootc` checks the signature of every update.
 
-Unwritten images are signed with [Sigstore](https://www.sigstore.dev/)'s [cosign](https://github.com/sigstore/cosign). To verify the signature, download the `cosign.pub` file from this repository and run:
+### 4. Unpin the safe deployment
+
+Look up the deployment you pinned in step 1. It is marked 'Pinned: yes', and its index has shifted since:
 
 ```shell
-cosign verify --key cosign.pub ghcr.io/celinekrestel/unwritten
+rpm-ostree status -v
+```
+
+Unpin it by its index number. For example, to unpin index `2`:
+
+```shell
+run0 ostree admin pin --unpin 2
 ```
 
 ---
 
-## Post-Installation
+## 🔧 Post-Installation
 
-*After rebasing from Silverblue to Unwritten*
+### 📦 Flatpak
 
-### Move Flatpaks to your user installation
+**What?**
 
-*Unwritten installs Flatpaks per user, from Flathub: installing and updating needs no password, and Flatpak's root helper for system-wide installs (`flatpak-system-helper`) is masked. Silverblue installs its default apps system-wide from Fedora's own remote, and rebasing keeps them, because Flatpaks live in `/var`, outside the image. One command moves them, once per machine. It does the same on a machine that ran Unwritten with system-wide Flatpaks before.*
+In this step, we move all Flatpaks to `user` and Flathub.
+
+**Why?**
+
+> [!note]
+>
+> Flatpak's root helper for system-wide installs (`flatpak-system-helper`) is masked.
+
+**How?**
+
+1. Close running apps first, including apps running in the background. 
+2. Move the Flatpaks, once per machine:
 
 ```shell
 flatpak-to-user
 ```
 
-It shows what it would move and asks first. Then it downloads every app and runtime again from Flathub into your installation. It copies pins, which keep a runtime that no app asks for, and masks, which stop updates, so a masked app keeps its version. Finally it removes the system copies and the system remotes; `run0` asks for your password once for that. App data in `~/.var/app` and your overrides stay where they are. An app that Flathub doesn't have stays in the system installation, together with its remote. Running it again is safe. Close running apps first, Steam especially: until they restart, they use their old copy.
+> [!Note]
+> `flatpak-to-user` shows what it would move and asks first. It downloads every app and runtime again from Flathub, copies pins and masks, and removes the system copies; `run0` asks for your password once for that. App data in `~/.var/app` and your overrides stay where they are, and an app that Flathub doesn't have stays in the system installation. Running it again is safe.
 
-Then remove the apps you don't want (examples) and install a web browser:
+3. Remove the apps you don't want, for example:
 
 ```shell
 flatpak uninstall org.gnome.Maps org.gnome.Weather org.gnome.Contacts
+```
+
+4. Install a web browser, since the image has none. For example, Firefox:
+
+```shell
 flatpak install flathub org.mozilla.firefox
 ```
 
-### Homebrew
+### 🍺 Homebrew
 
-*Command-line tools that don't belong in the image, such as ImageMagick or ClamAV, come from [Homebrew](https://brew.sh). It lives in one folder outside the image, `/home/linuxbrew/.linuxbrew` (which is `/var/home/linuxbrew/.linuxbrew`), and after the first command below it needs no root. Each program sits in `Cellar/<name>/<version>`, and `bin` holds links to them. Homebrew writes only to that folder and to `~/.cache/Homebrew`, never to the image, and updates and rollbacks of the image leave it alone. Its programs aren't sandboxed: they run with your rights, like anything else you start in the terminal.*
+In this step, we set up Homebrew.
+
+**Why?**
+
+Command-line tools that don't belong in the image, such as ImageMagick or ClamAV, come from [Homebrew](https://brew.sh). It lives in one folder outside the image, `/home/linuxbrew/.linuxbrew` (which is `/var/home/linuxbrew/.linuxbrew`), needs no root after the setup, and updates and rollbacks of the image leave it alone. Its programs aren't sandboxed: they run with your rights, like anything else you start in the terminal.
 
 Set it up once per machine:
 
@@ -154,12 +192,23 @@ ln -s ../Homebrew/bin/brew /home/linuxbrew/.linuxbrew/bin/brew
 brew update
 ```
 
-These are the steps of Homebrew's installer, without running a script from the internet. `/etc/profile.d/homebrew.sh` appends Homebrew's folders to the end of `PATH`, so a Homebrew package never takes the place of a system command, and it turns Homebrew's usage statistics off. Prebuilt packages don't need a compiler; if a formula has to be built, `brew install gcc` brings one.
+> [!Note]
+> These are the steps of Homebrew's installer, without running a script from the internet. `/etc/profile.d/homebrew.sh` appends Homebrew's folders to the end of `PATH`, so a Homebrew package never takes the place of a system command, and it turns Homebrew's usage statistics off.
+
+To install a tool:
 
 ```shell
-brew install imagemagick       # Install a tool
-brew update && brew upgrade    # Update everything
+brew install imagemagick
 ```
+
+To update everything:
+
+```shell
+brew update && brew upgrade
+```
+
+> [!Note]
+> Prebuilt packages don't need a compiler. If a formula has to be built, `brew install gcc` brings one.
 
 To remove Homebrew completely:
 
@@ -168,19 +217,24 @@ rm -rf /var/home/linuxbrew/.linuxbrew ~/.cache/Homebrew
 run0 rmdir /var/home/linuxbrew
 ```
 
-### The Terminal
+### 🐚 The shell
 
-*Unwritten ships zsh and Atuin, but leaves your login shell alone: `chsh` is removed on purpose, because if a shell set in `/etc/passwd` ever disappears from the image, logging in breaks. So the shell is set in the terminal profile instead, and everything else lives in your home folder. It survives every update and works the same on every machine.*
+Unwritten ships zsh and Atuin, but leaves your login shell alone. The shell is set in the terminal profile instead, and everything else lives in your home folder, so it survives every update and works the same on every machine.
+
+> [!Note]
+> `chsh` is removed on purpose: if a shell set in `/etc/passwd` ever disappears from the image, logging in breaks.
 
 #### Z Shell
 
-[Z Shell (zsh)](https://www.zsh.org/) offers several [advantages over Bash](https://linuxhint.com/differences_between_bash_zsh/). To switch to it without modifying system files such as `/etc/passwd`, configure it via your terminal profile:
+[Z Shell (zsh)](https://www.zsh.org/) offers several [advantages over Bash](https://linuxhint.com/differences_between_bash_zsh/). Set it as the shell of your terminal profile. In Ptyxis, open **hamburger menu → Preferences → Profiles → ⋮ → Edit…**, enable **Use Custom Command** in the **Shell** section and set it to:
 
-In Ptyxis: **hamburger menu → Preferences → Profiles → ⋮ → Edit… → Shell section → enable _Use Custom Command_ → set it to `/usr/bin/zsh --login`**.
+```text
+/usr/bin/zsh --login
+```
 
 #### Atuin
 
-[Atuin](https://github.com/atuinsh/atuin) provides enhanced shell history and is included in Unwritten. It is recommended to switch to zsh first, then add the following to `~/.zshrc`:
+[Atuin](https://github.com/atuinsh/atuin) provides enhanced shell history and is included in Unwritten. With zsh set up, add this to `~/.zshrc`:
 
 ```shell
 eval "$(atuin init zsh)"
@@ -188,16 +242,15 @@ eval "$(atuin init zsh)"
 
 #### Starship
 
-[Starship](https://starship.rs) is a fast, customisable shell prompt written in Rust. To install it locally:
+[Starship](https://starship.rs) is a fast, customisable shell prompt written in Rust. Install it with [Homebrew](#-homebrew):
 
 ```shell
-curl -sS https://starship.rs/install.sh | sh -s -- -b ~/.local/bin
+brew install starship
 ```
 
-Then add the following to `~/.zshrc`:
+Then add this to `~/.zshrc`:
 
 ```shell
-export PATH="$HOME/.local/bin:$PATH"
 eval "$(starship init zsh)"
 ```
 
@@ -207,7 +260,13 @@ eval "$(starship init zsh)"
 
 ### run0 and SELinux
 
-Because of a Fedora SELinux bug ([Fedora bug 2359828](https://bugzilla.redhat.com/show_bug.cgi?id=2359828)), `run0` cannot start programs that have their own SELinux domain, such as `bootc`, `dnf`, `rpm`, `journalctl`, `smartctl` or `groupadd`: they fail silently with exit code 203. Unwritten ships a small `run0` shell function (`/etc/profile.d/run0-selinux.sh`) that starts commands through `sh`, so `run0 <command>` just works. If you pass options to `run0` (for example `-u`), the function steps aside; use `run0 [options] sh -c 'exec "$@"' sh <command>` in that case.
+Because of a Fedora SELinux bug ([Fedora bug 2359828](https://bugzilla.redhat.com/show_bug.cgi?id=2359828)), `run0` cannot start programs that have their own SELinux domain, such as `bootc`, `dnf`, `rpm`, `journalctl`, `smartctl` or `groupadd`: they fail silently with exit code 203. Unwritten ships a small `run0` shell function (`/etc/profile.d/run0-selinux.sh`) that starts commands through `sh`, so `run0 <command>` just works.
+
+If you pass options to `run0` (for example `-u`), the function steps aside. Start the command through `sh` yourself:
+
+```shell
+run0 [options] sh -c 'exec "$@"' sh <command>
+```
 
 ### Btrfs layout
 
@@ -225,7 +284,8 @@ run0 firewall-cmd --permanent --add-service=mdns
 run0 firewall-cmd --reload
 ```
 
-Names ending in `.local` also need `nss-mdns`, which the image excludes.
+> [!Note]
+> Names ending in `.local` also need `nss-mdns`, which the image excludes.
 
 ### VPN and kill switch
 
@@ -233,40 +293,74 @@ The VPN is a set of plain WireGuard profiles from Proton, managed by NetworkMana
 
 The kill switch is on at every boot, before the network comes up. Without a tunnel there is no internet, on purpose. Its rules are in `/usr/lib/unwritten/killswitch.nft`, and they contain no server addresses.
 
+> [!Important]
+> A machine needs its profiles before it gets an image with the kill switch. Otherwise it boots without a tunnel and without internet, and `killswitch off` has to be run after every boot.
+
+To show the state:
+
 ```shell
-killswitch             # Shows the state
-killswitch off         # Until the next reboot, for example for a Wi-Fi login page
+killswitch
+```
+
+To turn it off until the next reboot, for example for a Wi-Fi login page:
+
+```shell
+killswitch off
+```
+
+To turn it back on:
+
+```shell
 killswitch on
 ```
 
-The **Kill Switch** launcher in the app grid does the same with one click. `fritz.box` doesn't resolve while the kill switch is on, but `http://192.168.178.1` works.
+The **Kill Switch** launcher in the app grid switches it on and off with one click.
 
-To add a profile, name the file after the rule the kill switch expects, like `pvpn-de.conf`. The file name becomes the interface name, which has to start with `pvpn-`, and the mark has to match:
+> [!Note]
+> Local names such as `fritz.box` don't resolve while the kill switch is on, but local addresses such as `http://192.168.178.1` still work.
+
+#### Add a profile
+
+Name the WireGuard file like `pvpn-de.conf`, then import it and set the mark:
 
 ```shell
 nmcli connection import type wireguard file pvpn-de.conf
 nmcli connection modify pvpn-de wireguard.fwmark 0xca6c ipv4.dns-priority -1500 ipv6.dns-priority -1500 connection.autoconnect no
 ```
 
-Only one profile connects automatically, and only one should be active at a time: disconnect one before connecting the next.
+> [!Important]
+> The file name becomes the interface name, which has to start with `pvpn-`, and the mark has to be `0xca6c`. Let only one profile connect automatically, and keep only one active at a time: disconnect one before connecting the next.
 
-To test the kill switch, keep the tunnel from connecting at boot. With a tunnel up, `curl` gets through it and the test below wrongly says `LEAK`.
+To let it connect automatically:
+
+```shell
+nmcli connection modify pvpn-de connection.autoconnect yes
+```
+
+#### Test the kill switch
+
+Keep the tunnel from connecting at boot, then reboot:
 
 ```shell
 nmcli connection modify pvpn-de connection.autoconnect no
 systemctl reboot
 ```
 
-Before logging in to GNOME, switch to a text console with Ctrl+Alt+F3, log in there and run this. It should say `blocked`:
+> [!Note]
+> With a tunnel up, `curl` gets through it and the test below wrongly says `LEAK`.
+
+Before logging in to GNOME, switch to a text console with <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F3</kbd>, log in there and run this. It should say `blocked`:
 
 ```shell
 curl -m 5 -sI https://example.com >/dev/null && echo "LEAK: traffic passes" || echo "blocked"
 ```
 
-Then turn `connection.autoconnect` back on and connect with `nmcli connection up pvpn-de`.
+Then let the profile connect automatically again, and connect it:
 
-> [!WARNING]
-> A machine needs its profiles before it gets an image with the kill switch. Otherwise it boots without a tunnel and without internet, and `killswitch off` has to be run after every boot.
+```shell
+nmcli connection modify pvpn-de connection.autoconnect yes
+nmcli connection up pvpn-de
+```
 
 ### Kernel hardening
 
@@ -282,7 +376,7 @@ The image ships the parts that are the same on every machine (in `/usr/lib/syste
 | `btrbk.service.d/40-require-config.conf` | Skip quietly on machines without `/etc/btrbk/btrbk.conf`. |
 | `btrbk.service.d/60-low-priority.conf` | Lowest CPU and I/O priority, `btrbk run --verbose`. |
 
-Each machine keeps its own parts in `/etc` (backed up in my dotfiles repo):
+Each machine keeps its own parts in `/etc`:
 
 - `/etc/btrbk/btrbk.conf`
 - `/etc/systemd/system/btrbk.service.d/50-wait-for-mounts.conf` with `RequiresMountsFor=` listing the `volume` and `target` paths from `btrbk.conf`, so btrbk waits until those disks are unlocked and mounted.
@@ -293,22 +387,23 @@ Each machine keeps its own parts in `/etc` (backed up in my dotfiles repo):
 
 ### GDM does not start at boot
 
-*Seen once when rebasing from Silverblue, not reproduced since.*
+> [!Note]
+> Seen once when rebasing from Silverblue, not reproduced since.
 
-If the system hangs at:
+The system hangs at:
 
-```
+```text
 [ OK ] Started gdm.service – GNOME Display Manager
 ```
 
-switch to a TTY with `Ctrl + Alt + F2` (or `F3`–`F6`; add `Fn` if needed) and log in as your user. Then run:
+Switch to a text console with <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F2</kbd> (or <kbd>F3</kbd> to <kbd>F6</kbd>; add <kbd>Fn</kbd> if needed) and log in as your user. Then run:
 
 ```shell
 run0 groupadd -r gdm
 run0 systemctl restart gdm
 ```
 
-You may need to run the second command twice, or perform a full reboot.
+If GDM still doesn't start, run the second command again or reboot.
 
 ---
 
@@ -320,4 +415,3 @@ You may need to run the second command twice, or perform a full reboot.
 - [solarpowered](https://github.com/askpng/solarpowered)
 - [MizukiOS](https://github.com/koitorin/MizukiOS)
 - [Entire Bootcrew project](https://github.com/bootcrew)
-

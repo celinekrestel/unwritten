@@ -2,7 +2,7 @@
 #
 # flatpak-to-user - moves the Flatpaks from the system installation into yours, from Flathub.
 #
-# Unwritten installs Flatpaks per user (see the README, 'Move Flatpaks to your user installation').
+# Unwritten installs Flatpaks per user (see the README: Post-Installation, 'Flatpak').
 # Run this once per machine, as yourself:
 #   1. It adds Flathub as a user remote and shows what it would move. Nothing moves before you agree.
 #   2. It installs every app and runtime again from Flathub into your installation. App data in
