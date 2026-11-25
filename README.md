@@ -1,41 +1,30 @@
 # Unwritten &nbsp; [![bluebuild build badge](https://github.com/celinekrestel/unwritten/actions/workflows/build.yml/badge.svg)](https://github.com/celinekrestel/unwritten/actions/workflows/build.yml)
 
-*A lean, personal Fedora desktop built from fedora-bootc.*
 
-## About
+Unwritten is a personal Fedora desktop built from [fedora-bootc](https://containers.github.io/bootc/). 
 
-> *"Nothing is written."*
-> — Lawrence in *Lawrence of Arabia* (1962)
+The name comes from *Lawrence of Arabia* (1962).
+> *Nothing is written.*
+> — Lawrence
 
-**Unwritten is my personal, image-based Fedora desktop.** It starts from the minimal [fedora-bootc](https://containers.github.io/bootc/) base image, which has no desktop at all, and adds only what I actually use. GitHub builds it every day; my desktop and my laptop both run the same image, and every update can be rolled back.
+When Lawrence returns, Sherif Ali concedes: 'Truly, for some men nothing is written unless they write it.'
 
-The name comes from that scene. When Lawrence returns, Sherif Ali concedes: 'Truly, for some men nothing is written unless they write it.' Unwritten works the same way.
+## Features
 
-### Principles
+| Component | Setup |
+| :--- | :--- |
+| 🪶 Lean Base | **1,012 RPM packages** |
+| 🍦 Desktop | **Vanilla GNOME** |
+| 📦 GUI Apps | **Flatpak** |
+| 🍺 CLI Tools | **Homebrew** |
+| 🐳 Containers | **Distrobox** |
+| 🛡️ Privilege Escalation | **No `sudo` — using `run0`** ([Sudon't](https://vanillaos.org/nerd-info)) |
+| 🔌 Network | **Built-in internet kill switch** |
+| ⚓ Updates | **Manual only** (no automatic updates) |
+| 🕊️ Graphics | **100% open-source drivers** (no NVIDIA) |
 
-- **Lean by design:** GNOME is assembled piece by piece instead of installed as a whole. Unwanted extras are kept out explicitly (see the exclude list in [`recipes/recipe.yml`](recipes/recipe.yml)).
-- **Apps come from Flathub, tools from Homebrew:** the image carries the system, Flathub the apps (installed per user), Homebrew the command-line tools. Neither touches the image.
-- **One image, two machines:** what is the same everywhere lives in the image; what is machine-specific lives in `/etc` and in my dotfiles.
-- **Careful defaults:** no `sudo` ([Sudon't](https://vanillaos.org/nerd-info)), SSH server off, no network discovery, core dumps disabled, a few kernel hardening settings, firewall on, signed images.
-- **Updates on my terms:** automatic updates are disabled; I update with `run0 bootc upgrade`.
-
-### At a glance
-
-| | |
-| --- | --- |
-| Base | fedora-bootc 45 |
-| Desktop | GNOME |
-| Apps | Flathub, installed per user |
-| Command-line tools | Homebrew |
-| Privileges | `run0` instead of `sudo` |
-| Updates | manual, with rollback |
-| Machines | my AMD desktop and a Lenovo IdeaPad 5 Pro 14ACN6 laptop |
-| Build | daily with [BlueBuild](https://blue-build.org) on GitHub Actions, signed with cosign |
-
-Unwritten is tailored to my hardware and habits. You are welcome to use it or borrow ideas, but it is not a general-purpose distribution.
-
-> [!IMPORTANT]
-> Unwritten uses **`run0`** instead of `sudo`. **`run0 <command>`** works as usual; see [run0 and SELinux](#run0-and-selinux) for the background. `sudo` remains available inside a distrobox environment.
+>[!Note]
+>The internet kill switch is enabled by default. Run `killswitch off` to disable it.
 
 ---
 
@@ -43,23 +32,19 @@ Unwritten is tailored to my hardware and habits. You are welcome to use it or bo
 
 ### Prerequisites
 
-Please install [Fedora Silverblue](https://fedoraproject.org/atomic-desktops/silverblue/) before proceeding:
+Install [Fedora Silverblue](https://fedoraproject.org/atomic-desktops/silverblue/).
 
-- Use the **default (automatic) partitioning**; encryption is fine. Unwritten expects Fedora's default btrfs layout, see [Btrfs layout](#btrfs-layout).
-- On my IdeaPad, I set **UMA Graphics** in the UEFI/BIOS first, see [Laptop](#laptop-lenovo-ideapad-5-pro-14acn6).
+Use the **default (automatic) partitioning**; encryption is fine. Unwritten expects Fedora's default btrfs layout, see [Btrfs layout](#btrfs-layout).
 
 ### 1. Pin a safe deployment
 
-> [!TIP]
-> It is good practice to pin a known-working deployment before rebasing to a new remote image source.
-
-List your current deployments (index numbers are shown in round brackets):
+List your current deployments:
 
 ```shell
 rpm-ostree status -v
 ```
 
-Pin a deployment by its index. For example, to pin index `0`:
+Pin a deployment by its index number. For example, to pin index `0`:
 
 ```shell
 sudo ostree admin pin 0
@@ -71,27 +56,27 @@ To unpin it later:
 sudo ostree admin pin --unpin 0
 ```
 
-> [!IMPORTANT]
-> Index numbers shift with each new incoming deployment. Always verify the correct index before pinning.
+> [!Note]
+> Index numbers shift with each new incoming deployment.
 
-> [!WARNING]
-> Unpin the deployment again once Unwritten runs well. A pinned deployment stays in the boot menu with its old software and its old update settings. If it is ever booted, it can pull updates from wherever it used to point.
+> [!Important]
+> Unpin the deployment again once Unwritten runs well.
 
 ### 2. Rebase to Unwritten
 
-First, download the image:
+Download the image:
 
 ```shell
 sudo bootc switch ghcr.io/celinekrestel/unwritten:latest
 ```
 
-Silverblue does not know Unwritten's signing key yet, so it accepts the image without checking it. Nothing from the image runs before you reboot, so check it now. Show what was downloaded and copy the digest (`sha256:…`) from the "Staged image" entry:
+Silverblue does not know Unwritten's signing key yet, so it accepts the image without checking it. Nothing from the image runs before you reboot, so check it now. Show what was downloaded and copy the digest (`sha256:…`) from the 'Staged image' entry:
 
 ```shell
 sudo bootc status
 ```
 
-Get the public key from this repository. If you already have a machine that runs Unwritten, use its `/etc/pki/containers/unwritten.pub` instead, so that the key does not come from the same place as the image:
+Get the public key from this repository (if another machine that runs Unwritten is available, use its `/etc/pki/containers/unwritten.pub` instead, so that the key does not come from the same place as the image):
 
 ```shell
 curl -fsSL -o cosign.pub https://raw.githubusercontent.com/celinekrestel/unwritten/main/cosign.pub
@@ -228,12 +213,6 @@ Because of a Fedora SELinux bug ([Fedora bug 2359828](https://bugzilla.redhat.co
 
 Unwritten sets the kernel argument `rootflags=subvol=root,compress=zstd:1`. It expects Fedora's default btrfs layout with the subvolume `root`, so install Silverblue with the default partitioning (encryption is fine).
 
-### Laptop: Lenovo IdeaPad 5 Pro 14ACN6
-
-- **Graphics:** set *Graphics Device* to **UMA Graphics** in the UEFI/BIOS settings. The GeForce MX450 is then switched off by the firmware and does not appear in `lspci` at all; Unwritten ships no NVIDIA support. A BIOS update can reset this setting, so check it after every BIOS update.
-- **External screens:** HDMI and USB-C are wired to the AMD GPU (`lspci` lists the MX450 as a display-less "3D controller"), so UMA mode does not affect them.
-- **Wi-Fi and Bluetooth:** MediaTek MT7921; its firmware (`mt7xxx-firmware`) is part of the image.
-
 ### Network discovery
 
 Unwritten doesn't look for printers, scanners or other devices on the network, and it doesn't announce itself there: avahi (mDNS) and LLMNR are off, the firewall only lets in DHCPv6, and the printing and discovery extras are excluded from the image. Printers, scanners and phones on USB work as usual, and a network printer can usually still be added by its address.
@@ -341,3 +320,4 @@ You may need to run the second command twice, or perform a full reboot.
 - [solarpowered](https://github.com/askpng/solarpowered)
 - [MizukiOS](https://github.com/koitorin/MizukiOS)
 - [Entire Bootcrew project](https://github.com/bootcrew)
+
